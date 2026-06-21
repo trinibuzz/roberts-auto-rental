@@ -52,15 +52,16 @@ export default function BookingActionButtons({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex w-full flex-col gap-2">
       {(status === "pending" || status === "confirmed") && (
         <button
           type="button"
           disabled={loadingAction !== ""}
           onClick={() => updateStatus("checkout")}
-          className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-4 py-3 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loadingAction === "checkout" ? "..." : "Check Out"}
+          <span className="mr-2">▣</span>
+          {loadingAction === "checkout" ? "Processing..." : "Check Out"}
         </button>
       )}
 
@@ -69,9 +70,10 @@ export default function BookingActionButtons({
           type="button"
           disabled={loadingAction !== ""}
           onClick={() => updateStatus("checkin")}
-          className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loadingAction === "checkin" ? "..." : "Check In"}
+          <span className="mr-2">✓</span>
+          {loadingAction === "checkin" ? "Processing..." : "Check In"}
         </button>
       )}
 
@@ -80,9 +82,10 @@ export default function BookingActionButtons({
           type="button"
           disabled={loadingAction !== ""}
           onClick={() => updateStatus("cancel")}
-          className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-3 text-xs font-black text-red-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loadingAction === "cancel" ? "..." : "Cancel"}
+          <span className="mr-2">□</span>
+          {loadingAction === "cancel" ? "Processing..." : "Cancel"}
         </button>
       )}
     </div>
