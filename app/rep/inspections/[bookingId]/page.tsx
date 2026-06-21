@@ -33,6 +33,8 @@ type Inspection = {
   inspection_type: string;
   mileage: number | null;
   fuel_level: string | null;
+  exterior_condition: string | null;
+  interior_condition: string | null;
   damage_notes: string | null;
   rep_name: string | null;
   created_at: string;
@@ -119,7 +121,6 @@ async function getBookingDetails(bookingId: string) {
   );
 
   const bookings = bookingRows as BookingDetails[];
-
   const booking = bookings[0];
 
   if (!booking) {
@@ -133,6 +134,8 @@ async function getBookingDetails(bookingId: string) {
         inspection_type,
         mileage,
         fuel_level,
+        exterior_condition,
+        interior_condition,
         damage_notes,
         rep_name,
         created_at
@@ -222,7 +225,7 @@ export default async function RepInspectionDetailPage({
 
       <section className="mx-auto max-w-7xl px-5 py-8">
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1f3a] to-[#26070a] p-6 shadow-2xl md:p-10">
-          <div className="mb-4 inline-block rounded-full bg-[#d4af37] px-3 py-1 text-xs font-black text-[#07111f]">
+          <div className="mb-4 inline-block rounded-full bg-[#d4af37] px-3 py-1 text-xs font-black uppercase text-[#07111f]">
             {booking.status}
           </div>
 
@@ -268,7 +271,7 @@ export default async function RepInspectionDetailPage({
                     key={inspection.id}
                     className="rounded-2xl border border-white/10 bg-white/5 p-4"
                   >
-                    <div className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-[#d4af37]">
+                    <div className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-[#d4af37]">
                       {inspection.inspection_type}
                     </div>
 
@@ -281,6 +284,23 @@ export default async function RepInspectionDetailPage({
                     </p>
 
                     <p className="mt-3 text-white/70">
+                      <span className="font-bold text-white">
+                        Exterior:
+                      </span>{" "}
+                      {inspection.exterior_condition || "No exterior notes."}
+                    </p>
+
+                    <p className="mt-2 text-white/70">
+                      <span className="font-bold text-white">
+                        Interior:
+                      </span>{" "}
+                      {inspection.interior_condition || "No interior notes."}
+                    </p>
+
+                    <p className="mt-2 text-white/70">
+                      <span className="font-bold text-white">
+                        Damage:
+                      </span>{" "}
                       {inspection.damage_notes || "No damage notes."}
                     </p>
 
@@ -298,7 +318,9 @@ export default async function RepInspectionDetailPage({
 
             <div className="mt-5 space-y-4">
               {media.length === 0 ? (
-                <p className="text-white/60">No videos or photos uploaded yet.</p>
+                <p className="text-white/60">
+                  No videos or photos uploaded yet.
+                </p>
               ) : (
                 media.map((item) => (
                   <div
@@ -306,10 +328,11 @@ export default async function RepInspectionDetailPage({
                     className="rounded-2xl border border-white/10 bg-white/5 p-4"
                   >
                     <div className="mb-3 flex gap-2">
-                      <span className="rounded-full bg-[#d4af37] px-3 py-1 text-xs font-black text-[#07111f]">
+                      <span className="rounded-full bg-[#d4af37] px-3 py-1 text-xs font-black uppercase text-[#07111f]">
                         {item.inspection_type}
                       </span>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70">
+
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-white/70">
                         {item.media_type}
                       </span>
                     </div>

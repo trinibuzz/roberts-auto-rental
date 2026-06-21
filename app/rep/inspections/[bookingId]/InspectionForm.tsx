@@ -109,6 +109,10 @@ export default function InspectionForm({
 
       setFile(null);
       setSuccess("Video/photo uploaded successfully.");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       setMessage("Unable to connect to the server.");
     } finally {
@@ -141,6 +145,7 @@ export default function InspectionForm({
             <label className="mb-2 block text-sm font-bold text-white/70">
               Inspection Type
             </label>
+
             <select
               value={form.inspection_type}
               onChange={(event) =>
@@ -164,6 +169,7 @@ export default function InspectionForm({
             <label className="mb-2 block text-sm font-bold text-white/70">
               Fuel Level
             </label>
+
             <select
               value={form.fuel_level}
               onChange={(event) => updateField("fuel_level", event.target.value)}
@@ -211,9 +217,10 @@ export default function InspectionForm({
 
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <h2 className="text-2xl font-black">Upload Walkaround Evidence</h2>
+
         <p className="mt-2 text-white/60">
-          Upload video or photos for this booking. These files will also appear
-          on the booking evidence record.
+          Upload video or photos for this booking. Use this before checkout and
+          again when the vehicle returns.
         </p>
 
         <div className="mt-5">
@@ -254,6 +261,7 @@ function Input({
       <label className="mb-2 block text-sm font-bold text-white/70">
         {label}
       </label>
+
       <input
         type={type}
         value={value}
@@ -280,6 +288,7 @@ function TextArea({
       <label className="mb-2 block text-sm font-bold text-white/70">
         {label}
       </label>
+
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}

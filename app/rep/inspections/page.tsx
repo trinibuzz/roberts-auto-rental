@@ -125,6 +125,7 @@ export default async function RepInspectionsPage() {
                 className="h-12 w-auto object-contain"
               />
             </div>
+
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-[#d4af37]">
                 Roberts Auto Rental
@@ -147,9 +148,11 @@ export default async function RepInspectionsPage() {
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#d4af37]">
             Phase 3
           </p>
+
           <h1 className="mt-3 text-4xl font-black md:text-6xl">
             Vehicle Inspection
           </h1>
+
           <p className="mt-4 max-w-2xl text-white/70">
             Select a booking to record checkout or return condition, damages,
             mileage, fuel level, photos, and video evidence.
@@ -192,7 +195,9 @@ export default async function RepInspectionsPage() {
 
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
                     <p>Pickup: {formatDate(booking.pickup_date)}</p>
-                    <p className="mt-1">Return: {formatDate(booking.return_date)}</p>
+                    <p className="mt-1">
+                      Return: {formatDate(booking.return_date)}
+                    </p>
                   </div>
                 </div>
               </Link>
