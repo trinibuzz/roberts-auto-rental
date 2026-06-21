@@ -131,6 +131,7 @@ export default async function RepDashboardPage() {
                 className="h-12 w-auto object-contain"
               />
             </div>
+
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-[#d4af37]">
                 Roberts Auto Rental
@@ -152,9 +153,11 @@ export default async function RepDashboardPage() {
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#d4af37]">
             Rep Dashboard
           </p>
+
           <h1 className="mt-3 text-4xl font-black md:text-6xl">
             Welcome, {user.name}
           </h1>
+
           <p className="mt-4 max-w-2xl text-white/70">
             Start a new rental, add a customer, check today’s pickups, or upload
             inspection evidence from the tablet.
@@ -167,16 +170,19 @@ export default async function RepDashboardPage() {
             value={stats.availableVehicles}
             note="Ready to rent"
           />
+
           <StatCard
             title="Today's Pickups"
             value={stats.todaysPickups}
             note="Scheduled today"
           />
+
           <StatCard
             title="Today's Returns"
             value={stats.todaysReturns}
             note="Due back today"
           />
+
           <StatCard
             title="Active Rentals"
             value={stats.activeRentals}
@@ -189,32 +195,35 @@ export default async function RepDashboardPage() {
             title="New Booking"
             text="Create a rental booking for a customer."
             href="/rep/bookings/new"
-            disabled
           />
+
           <ActionCard
             title="Add Customer"
             text="Capture customer details quickly."
             href="/rep/customers/new"
-            disabled
           />
+
           <ActionCard
             title="Vehicle Inspection"
             text="Mark scratches, damages, photos, and videos."
             href="/rep/inspections"
             disabled
           />
+
           <ActionCard
             title="Upload Video"
             text="Upload walkaround evidence before or after rental."
             href="/rep/videos"
             disabled
           />
+
           <ActionCard
             title="Record Payment"
             text="Collect deposit, balance, or rental payment."
             href="/rep/payments"
             disabled
           />
+
           <ActionCard
             title="Customer Signature"
             text="Let the customer sign the agreement on screen."
@@ -225,11 +234,13 @@ export default async function RepDashboardPage() {
 
         <div className="mt-8 rounded-3xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-6">
           <h2 className="text-2xl font-black text-[#d4af37]">
-            Phase 1 Installed
+            Phase 2 Active
           </h2>
+
           <p className="mt-2 leading-7 text-white/70">
-            Rep login and dashboard are now ready. The next phase will activate
-            the New Booking and Add Customer buttons.
+            New Booking and Add Customer are now active. Vehicle inspection,
+            video upload, payment recording, and customer signature are coming
+            in the next phase.
           </p>
         </div>
       </section>
@@ -272,7 +283,9 @@ function ActionCard({
         <div className="mb-4 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/50">
           Coming Next
         </div>
+
         <h3 className="text-2xl font-black">{title}</h3>
+
         <p className="mt-3 leading-7 text-white/60">{text}</p>
       </div>
     );
@@ -281,10 +294,15 @@ function ActionCard({
   return (
     <Link
       href={href}
-      className="rounded-3xl border border-white/10 bg-white/10 p-6 hover:bg-white/15"
+      className="rounded-3xl border border-[#d4af37]/40 bg-[#d4af37]/10 p-6 transition hover:-translate-y-1 hover:bg-[#d4af37]/20"
     >
+      <div className="mb-4 inline-block rounded-full bg-[#d4af37] px-3 py-1 text-xs font-black text-[#07111f]">
+        Active
+      </div>
+
       <h3 className="text-2xl font-black">{title}</h3>
-      <p className="mt-3 leading-7 text-white/60">{text}</p>
+
+      <p className="mt-3 leading-7 text-white/70">{text}</p>
     </Link>
   );
 }
