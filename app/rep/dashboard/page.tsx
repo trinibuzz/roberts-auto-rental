@@ -226,7 +226,6 @@ export default async function RepDashboardPage() {
             title="Customer Signature"
             text="Let the customer sign the agreement on screen."
             href="/rep/signatures"
-            disabled
           />
         </div>
 
