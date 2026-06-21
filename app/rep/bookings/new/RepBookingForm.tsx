@@ -116,12 +116,18 @@ export default function RepBookingForm({
         return;
       }
 
-      setSuccess(`Booking created successfully: ${data.booking_number}`);
+      const newBookingId = data.booking_id || data.bookingId;
 
-      setTimeout(() => {
-        router.push(`/rep/workflow/${data.booking_id}`);
-        router.refresh();
-      }, 1200);
+if (!newBookingId) {
+  setMessage("Booking was created, but the booking ID was not returned.");
+  return;
+}
+
+setSuccess(`Booking created successfully: ${data.booking_number || data.bookingNumber}`);
+
+setTimeout(() => {
+  window.location.href = `/rep/workflow/${newBookingId}`;
+}, 1200);
     } catch (error) {
       setMessage("Unable to connect to the server.");
     } finally {

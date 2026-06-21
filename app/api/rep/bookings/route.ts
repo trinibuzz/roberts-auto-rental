@@ -241,11 +241,13 @@ export async function POST(request: NextRequest) {
 
     const insertResult = result as { insertId: number };
 
-    return NextResponse.json({
-      message: "Booking created successfully.",
-      booking_id: insertResult.insertId,
-      booking_number: bookingNumber,
-    });
+  return NextResponse.json({
+  message: "Booking created successfully.",
+  booking_id: insertResult.insertId,
+  bookingId: insertResult.insertId,
+  booking_number: bookingNumber,
+  bookingNumber: bookingNumber,
+});
   } catch (error) {
     console.error("REP CREATE BOOKING ERROR:", error);
 
