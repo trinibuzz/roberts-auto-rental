@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import jwt from "jsonwebtoken";
 import mysql from "mysql2/promise";
+import RepBookingForm from "./RepBookingForm";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +14,20 @@ type RepUser = {
   role: string;
 };
 
-type DashboardStats = {
-  availableVehicles: number;
-  todaysPickups: number;
-  todaysReturns: number;
-  activeRentals: number;
+type Customer = {
+  id: number;
+  full_name: string;
+  phone: string;
+};
+
+type Vehicle = {
+  id: number;
+  vehicle_name: string;
+  make: string;
+  model: string;
+  plate_number: string;
+  daily_rate: number;
+  deposit_amount: number;
 };
 
 function getJwtSecret() {
@@ -65,64 +75,49 @@ async function getRepUser() {
   }
 }
 
-async function getDashboardStats(): Promise<DashboardStats> {
+async function getFormData() {
   const pool = createPool();
 
-  const [availableRows] = await pool.execute(
+  const [customerRows] = await pool.execute(
     `
-      SELECT COUNT(*) AS count
+      SELECT id, full_name, phone
+      FROM customers
+      WHERE is_blacklisted = 0
+      ORDER BY full_name ASC
+    `
+  );
+
+  const [vehicleRows] = await pool.execute(
+    `
+      SELECT 
+        id,
+        vehicle_name,
+        make,
+        model,
+        plate_number,
+        daily_rate,
+        deposit_amount
       FROM vehicles
       WHERE status = 'available'
+      ORDER BY vehicle_name ASC
     `
   );
-
-  const [pickupRows] = await pool.execute(
-    `
-      SELECT COUNT(*) AS count
-      FROM bookings
-      WHERE DATE(pickup_date) = CURDATE()
-      AND status IN ('confirmed', 'active')
-    `
-  );
-
-  const [returnRows] = await pool.execute(
-    `
-      SELECT COUNT(*) AS count
-      FROM bookings
-      WHERE DATE(return_date) = CURDATE()
-      AND status IN ('active', 'overdue')
-    `
-  );
-
-  const [activeRows] = await pool.execute(
-    `
-      SELECT COUNT(*) AS count
-      FROM bookings
-      WHERE status = 'active'
-    `
-  );
-
-  const available = availableRows as Array<{ count: number }>;
-  const pickups = pickupRows as Array<{ count: number }>;
-  const returns = returnRows as Array<{ count: number }>;
-  const active = activeRows as Array<{ count: number }>;
 
   return {
-    availableVehicles: Number(available[0]?.count || 0),
-    todaysPickups: Number(pickups[0]?.count || 0),
-    todaysReturns: Number(returns[0]?.count || 0),
-    activeRentals: Number(active[0]?.count || 0),
+    customers: customerRows as Customer[],
+    vehicles: vehicleRows as Vehicle[],
   };
 }
 
-export default async function RepDashboardPage() {
-  const user = await getRepUser();
-  const stats = await getDashboardStats();
+export default async function NewRepBookingPage() {
+  await getRepUser();
+
+  const { customers, vehicles } = await getFormData();
 
   return (
     <main className="min-h-screen bg-[#07111f] text-white">
       <header className="border-b border-white/10 bg-[#050b14] px-5 py-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link href="/rep/dashboard" className="flex items-center gap-3">
             <div className="rounded-xl bg-white p-2">
               <img
@@ -132,177 +127,69 @@ export default async function RepDashboardPage() {
               />
             </div>
 
-            <div className="hidden sm:block">
+            <div>
               <p className="text-sm font-bold text-[#d4af37]">
                 Roberts Auto Rental
               </p>
-              <p className="text-xs text-white/50">Rep Tablet App</p>
+              <p className="text-xs text-white/50">New Booking</p>
             </div>
           </Link>
 
-          <form action="/api/rep/logout" method="post">
-            <button className="rounded-xl border border-white/20 px-4 py-3 text-sm font-bold text-white hover:bg-white/10">
-              Logout
-            </button>
-          </form>
+          <Link
+            href="/rep/dashboard"
+            className="rounded-xl border border-white/20 px-4 py-3 text-sm font-bold hover:bg-white/10"
+          >
+            Dashboard
+          </Link>
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-5 py-8">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1f3a] to-[#26070a] p-6 shadow-2xl md:p-10">
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#d4af37]">
-            Rep Dashboard
-          </p>
+      <section className="mx-auto max-w-6xl px-5 py-8">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#d4af37]">
+                Rep Booking Entry
+              </p>
 
-          <h1 className="mt-3 text-4xl font-black md:text-6xl">
-            Welcome, {user.name}
-          </h1>
+              <h1 className="mt-3 text-4xl font-black">
+                Create New Booking
+              </h1>
 
-          <p className="mt-4 max-w-2xl text-white/70">
-            Start a new rental, add a customer, check today’s pickups, or upload
-            inspection evidence from the tablet.
-          </p>
-        </div>
+              <p className="mt-3 text-white/60">
+                Select a customer, choose an available vehicle, and create a
+                confirmed booking from the tablet.
+              </p>
+            </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Available Vehicles"
-            value={stats.availableVehicles}
-            note="Ready to rent"
-          />
+            <Link
+              href="/rep/customers/new"
+              className="rounded-xl bg-[#d4af37] px-5 py-4 text-center font-black text-[#07111f] hover:bg-[#c79f2f]"
+            >
+              Add Customer
+            </Link>
+          </div>
 
-          <StatCard
-            title="Today's Pickups"
-            value={stats.todaysPickups}
-            note="Scheduled today"
-          />
-
-          <StatCard
-            title="Today's Returns"
-            value={stats.todaysReturns}
-            note="Due back today"
-          />
-
-          <StatCard
-            title="Active Rentals"
-            value={stats.activeRentals}
-            note="Currently out"
-          />
-        </div>
-
-        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <ActionCard
-            title="New Booking"
-            text="Create a rental booking for a customer."
-            href="/rep/bookings/new"
-          />
-
-          <ActionCard
-            title="Add Customer"
-            text="Capture customer details quickly."
-            href="/rep/customers/new"
-          />
-
-          <ActionCard
-            title="Vehicle Inspection"
-            text="Mark scratches, damages, photos, and videos."
-            href="/rep/inspections"
-            disabled
-          />
-
-          <ActionCard
-            title="Upload Video"
-            text="Upload walkaround evidence before or after rental."
-            href="/rep/videos"
-            disabled
-          />
-
-          <ActionCard
-            title="Record Payment"
-            text="Collect deposit, balance, or rental payment."
-            href="/rep/payments"
-            disabled
-          />
-
-          <ActionCard
-            title="Customer Signature"
-            text="Let the customer sign the agreement on screen."
-            href="/rep/signatures"
-            disabled
-          />
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-6">
-          <h2 className="text-2xl font-black text-[#d4af37]">
-            Phase 2 In Progress
-          </h2>
-
-          <p className="mt-2 leading-7 text-white/70">
-            New Booking and Add Customer are active. The next phase will turn on
-            vehicle inspection, video upload, payment recording, and customer
-            signature.
-          </p>
+          {customers.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-yellow-300 bg-yellow-50 p-5 text-yellow-800">
+              <p className="font-bold">No customers found.</p>
+              <p className="mt-1 text-sm">
+                Add a customer first before creating a booking.
+              </p>
+            </div>
+          ) : vehicles.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-yellow-300 bg-yellow-50 p-5 text-yellow-800">
+              <p className="font-bold">No available vehicles found.</p>
+              <p className="mt-1 text-sm">
+                Check the admin vehicle list and make sure at least one vehicle
+                is marked available.
+              </p>
+            </div>
+          ) : (
+            <RepBookingForm customers={customers} vehicles={vehicles} />
+          )}
         </div>
       </section>
     </main>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-  note,
-}: {
-  title: string;
-  value: number;
-  note: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/10 p-5">
-      <p className="text-sm font-bold text-white/60">{title}</p>
-      <p className="mt-3 text-4xl font-black text-[#d4af37]">{value}</p>
-      <p className="mt-2 text-sm text-white/50">{note}</p>
-    </div>
-  );
-}
-
-function ActionCard({
-  title,
-  text,
-  href,
-  disabled,
-}: {
-  title: string;
-  text: string;
-  href: string;
-  disabled?: boolean;
-}) {
-  if (disabled) {
-    return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 opacity-70">
-        <div className="mb-4 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/50">
-          Coming Next
-        </div>
-
-        <h3 className="text-2xl font-black">{title}</h3>
-
-        <p className="mt-3 leading-7 text-white/60">{text}</p>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href={href}
-      className="rounded-3xl border border-white/10 bg-white/10 p-6 transition hover:-translate-y-1 hover:bg-white/15"
-    >
-      <div className="mb-4 inline-block rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#d4af37]">
-        Active
-      </div>
-
-      <h3 className="text-2xl font-black">{title}</h3>
-
-      <p className="mt-3 leading-7 text-white/60">{text}</p>
-    </Link>
   );
 }
