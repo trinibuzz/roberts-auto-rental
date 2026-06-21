@@ -207,7 +207,6 @@ export default async function RepDashboardPage() {
             title="Vehicle Inspection"
             text="Mark scratches, damages, photos, and videos."
             href="/rep/inspections"
-            disabled
           />
 
           <ActionCard
