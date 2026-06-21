@@ -16,10 +16,10 @@ export default function AdminSidebar({
 }) {
   return (
     <aside className="hidden min-h-screen w-72 shrink-0 bg-[#0b0b0c] text-white print:hidden md:block">
-      <div className="flex min-h-screen flex-col border-r border-[#d4af37]/20 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.12),_transparent_35%),linear-gradient(180deg,#101010_0%,#070707_100%)]">
+      <div className="flex min-h-screen flex-col border-r border-[#d4af37]/20 bg-[#0b0b0c]">
         <div className="px-6 pb-6 pt-8">
           <Link href="/admin/dashboard" className="block">
-            <div className="rounded-2xl border border-[#d4af37]/20 bg-black/40 p-4 shadow-xl">
+            <div className="rounded-2xl border border-[#d4af37]/25 bg-white p-4 shadow-lg">
               <img
                 src="/images/roberts-logo.png"
                 alt="Roberts Auto Rental and Leasing"
@@ -28,87 +28,72 @@ export default function AdminSidebar({
             </div>
           </Link>
 
-          <div className="mx-auto mt-4 h-px w-24 bg-[#d4af37]" />
-
-          <p className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.28em] text-[#d4af37]">
-            Auto Rental & Leasing
+          <p className="mt-4 text-center text-xs font-bold uppercase tracking-[0.25em] text-[#d4af37]">
+            Fleet Manager
           </p>
+
+          <div className="mx-auto mt-4 h-px w-28 bg-[#d4af37]/60" />
         </div>
 
-        <nav className="flex-1 space-y-2 px-4 py-4 text-sm">
+        <nav className="flex-1 space-y-1 px-4 py-4 text-sm">
           <SidebarLink
             href="/admin/dashboard"
             label="Dashboard"
-            icon="▦"
             active={active === "dashboard"}
           />
 
           <SidebarLink
             href="/admin/bookings"
             label="Bookings"
-            icon="▣"
             active={active === "bookings"}
           />
 
           <SidebarLink
             href="/admin/calendar"
             label="Calendar View"
-            icon="□"
             active={active === "calendar"}
           />
 
           <SidebarLink
             href="/admin/vehicles"
             label="Vehicles"
-            icon="▰"
             active={active === "vehicles"}
           />
 
           <SidebarLink
             href="/admin/customers"
             label="Customers"
-            icon="○"
             active={active === "customers"}
           />
 
           <SidebarLink
             href="/admin/payments"
             label="Payments"
-            icon="▤"
             active={active === "payments"}
           />
 
           <SidebarLink
             href="/admin/maintenance"
             label="Maintenance"
-            icon="⚒"
             active={active === "maintenance"}
           />
 
           <SidebarLink
             href="/admin/reports"
             label="Reports"
-            icon="▥"
             active={active === "reports"}
           />
         </nav>
 
         <div className="px-4 pb-6">
-          <div className="mb-4 rounded-2xl border border-[#d4af37]/20 bg-black/30 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#d4af37] to-[#b98320] text-sm font-black text-[#07111f]">
-                AM
-              </div>
+          <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#d4af37]">
+              Logged in as
+            </p>
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black text-white">
-                  Admin Manager
-                </p>
-                <p className="truncate text-xs text-white/50">
-                  admin@roberts.com
-                </p>
-              </div>
-            </div>
+            <p className="mt-2 truncate text-sm font-bold text-white">
+              Admin Manager
+            </p>
           </div>
 
           <AdminLogoutButton />
@@ -121,12 +106,10 @@ export default function AdminSidebar({
 function SidebarLink({
   href,
   label,
-  icon,
   active,
 }: {
   href: string;
   label: string;
-  icon: string;
   active: boolean;
 }) {
   return (
@@ -134,21 +117,15 @@ function SidebarLink({
       href={href}
       className={
         active
-          ? "group flex items-center gap-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-4 py-4 font-black text-white shadow-lg shadow-black/30"
-          : "group flex items-center gap-4 rounded-xl px-4 py-4 font-semibold text-white/85 transition hover:bg-white/10 hover:text-white"
+          ? "relative block rounded-xl border border-[#d4af37]/20 bg-white/[0.06] px-5 py-4 font-bold text-white"
+          : "relative block rounded-xl border border-transparent px-5 py-4 font-semibold text-white/75 transition hover:bg-white/[0.04] hover:text-white"
       }
     >
-      <span
-        className={
-          active
-            ? "flex h-6 w-6 items-center justify-center text-lg text-white"
-            : "flex h-6 w-6 items-center justify-center text-lg text-white/70 group-hover:text-[#d4af37]"
-        }
-      >
-        {icon}
-      </span>
+      {active && (
+        <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-[#d4af37]" />
+      )}
 
-      <span>{label}</span>
+      <span className={active ? "text-[#d4af37]" : ""}>{label}</span>
     </Link>
   );
 }
