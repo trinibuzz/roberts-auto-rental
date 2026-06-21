@@ -119,7 +119,7 @@ export default function RepBookingForm({
       setSuccess(`Booking created successfully: ${data.booking_number}`);
 
       setTimeout(() => {
-        router.push("/rep/dashboard");
+        router.push(`/rep/workflow/${data.booking_id}`);
         router.refresh();
       }, 1200);
     } catch (error) {
