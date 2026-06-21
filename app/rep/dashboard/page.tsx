@@ -220,9 +220,8 @@ export default async function RepDashboardPage() {
             title="Record Payment"
             text="Collect deposit, balance, or rental payment."
             href="/rep/payments"
-            disabled
           />
-
+          
           <ActionCard
             title="Customer Signature"
             text="Let the customer sign the agreement on screen."
