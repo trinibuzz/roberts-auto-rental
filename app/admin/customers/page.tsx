@@ -12,6 +12,7 @@ type Customer = {
   phone: string;
   whatsapp: string | null;
   email: string | null;
+  customer_photo: string | null;
   license_number: string | null;
   license_expiry: string | null;
   is_blacklisted: number;
@@ -77,8 +78,8 @@ export default async function CustomersPage() {
                 </h1>
 
                 <p className="mt-2 text-sm text-[#6b6257]">
-                  Manage customer records, contact information, license details,
-                  balances, and booking history.
+                  Manage customer records, profile photos, contact information,
+                  license details, balances, and booking history.
                 </p>
               </div>
 
@@ -116,7 +117,7 @@ export default async function CustomersPage() {
                     <div className="mt-6 h-1 w-16 bg-[#d4af37]" />
 
                     <p className="mt-6 font-serif text-xl text-[#d4af37]">
-                      Know every renter before the keys go out.
+                      Click a customer to open their full profile.
                     </p>
                   </div>
                 </div>
@@ -215,6 +216,7 @@ export default async function CustomersPage() {
                           <th className="px-7 py-5">Bookings</th>
                           <th className="px-7 py-5">Balance</th>
                           <th className="px-7 py-5">Status</th>
+                          <th className="px-7 py-5 text-right">Profile</th>
                         </tr>
                       </thead>
 
@@ -225,15 +227,24 @@ export default async function CustomersPage() {
                             className="transition hover:bg-[#fbfaf8]"
                           >
                             <td className="px-7 py-6 align-top">
-                              <p className="font-black text-[#1d1d1f]">
-                                {customer.full_name}
-                              </p>
+                              <Link
+                                href={`/admin/customers/${customer.id}`}
+                                className="flex items-start gap-4"
+                              >
+                                <CustomerAvatar customer={customer} size="lg" />
 
-                              {customer.whatsapp && (
-                                <p className="mt-1 text-xs text-[#8a8178]">
-                                  WhatsApp: {customer.whatsapp}
-                                </p>
-                              )}
+                                <div>
+                                  <p className="font-black text-[#1d1d1f] hover:text-[#b98320]">
+                                    {customer.full_name}
+                                  </p>
+
+                                  {customer.whatsapp && (
+                                    <p className="mt-1 text-xs text-[#8a8178]">
+                                      WhatsApp: {customer.whatsapp}
+                                    </p>
+                                  )}
+                                </div>
+                              </Link>
                             </td>
 
                             <td className="px-7 py-6 align-top">
@@ -277,6 +288,15 @@ export default async function CustomersPage() {
                                 isBlacklisted={customer.is_blacklisted}
                               />
                             </td>
+
+                            <td className="px-7 py-6 align-top text-right">
+                              <Link
+                                href={`/admin/customers/${customer.id}`}
+                                className="inline-flex rounded-xl bg-[#0b0b0c] px-4 py-3 text-xs font-black text-white shadow-sm hover:bg-[#1c1c1e]"
+                              >
+                                View Profile
+                              </Link>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -285,25 +305,30 @@ export default async function CustomersPage() {
 
                   <div className="grid gap-4 p-5 xl:hidden">
                     {customers.map((customer) => (
-                      <div
+                      <Link
                         key={customer.id}
-                        className="rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-5"
+                        href={`/admin/customers/${customer.id}`}
+                        className="block rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-5 transition hover:border-[#d4af37]/50 hover:bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-lg font-black text-[#1d1d1f]">
-                              {customer.full_name}
-                            </p>
+                          <div className="flex items-start gap-4">
+                            <CustomerAvatar customer={customer} size="md" />
 
-                            <p className="mt-1 text-sm text-[#7a7168]">
-                              {customer.phone}
-                            </p>
-
-                            {customer.whatsapp && (
-                              <p className="mt-1 text-xs text-[#8a8178]">
-                                WhatsApp: {customer.whatsapp}
+                            <div>
+                              <p className="text-lg font-black text-[#1d1d1f]">
+                                {customer.full_name}
                               </p>
-                            )}
+
+                              <p className="mt-1 text-sm text-[#7a7168]">
+                                {customer.phone}
+                              </p>
+
+                              {customer.whatsapp && (
+                                <p className="mt-1 text-xs text-[#8a8178]">
+                                  WhatsApp: {customer.whatsapp}
+                                </p>
+                              )}
+                            </div>
                           </div>
 
                           <StatusBadge
@@ -342,7 +367,11 @@ export default async function CustomersPage() {
                             {formatMoney(customer.total_balance)}
                           </p>
                         </div>
-                      </div>
+
+                        <div className="mt-5 text-sm font-black text-[#b98320]">
+                          View full customer profile →
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 </>
@@ -355,9 +384,9 @@ export default async function CustomersPage() {
               </h3>
 
               <p className="mt-3 max-w-4xl text-sm leading-6 text-[#6b6257]">
-                Keep customer phone numbers, WhatsApp numbers, license details,
-                and balances updated. This helps staff confirm bookings faster
-                and avoid issues before a vehicle is released.
+                Keep customer phone numbers, WhatsApp numbers, profile photos,
+                license details, and balances updated. This helps staff confirm
+                bookings faster and avoid issues before a vehicle is released.
               </p>
             </section>
 
@@ -392,6 +421,34 @@ function StatCard({
       <p className="mt-3 text-4xl font-black text-[#1d1d1f]">{value}</p>
 
       <p className="mt-2 text-sm text-[#7a7168]">{note}</p>
+    </div>
+  );
+}
+
+function CustomerAvatar({
+  customer,
+  size,
+}: {
+  customer: Pick<Customer, "full_name" | "customer_photo">;
+  size: "md" | "lg";
+}) {
+  const sizeClasses = size === "lg" ? "h-14 w-14" : "h-12 w-12";
+
+  if (customer.customer_photo) {
+    return (
+      <img
+        src={customer.customer_photo}
+        alt={customer.full_name}
+        className={`${sizeClasses} rounded-2xl border border-[#eee9df] object-cover shadow-sm`}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClasses} flex items-center justify-center rounded-2xl bg-[#d4af37]/15 text-lg font-black text-[#b98320]`}
+    >
+      {customer.full_name ? customer.full_name.charAt(0).toUpperCase() : "?"}
     </div>
   );
 }

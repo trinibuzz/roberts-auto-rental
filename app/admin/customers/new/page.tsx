@@ -1,9 +1,11 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import AdminSidebar from "@/app/admin/components/AdminSidebar";
 import AdminMobileHeader from "@/app/admin/components/AdminMobileHeader";
 
@@ -15,6 +17,7 @@ export default function AddCustomerPage() {
     phone: "",
     whatsapp: "",
     email: "",
+    customer_photo: "",
     address: "",
     date_of_birth: "",
     license_number: "",
@@ -27,6 +30,8 @@ export default function AddCustomerPage() {
   });
 
   const [error, setError] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function updateField(name: string, value: string | boolean) {
@@ -34,6 +39,40 @@ export default function AddCustomerPage() {
       ...previous,
       [name]: value,
     }));
+  }
+
+  async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    setPhotoError("");
+    setPhotoUploading(true);
+
+    try {
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+
+      const response = await fetch("/api/admin/customer-photo", {
+        method: "POST",
+        body: uploadForm,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setPhotoError(data.message || "Failed to upload customer photo.");
+        setPhotoUploading(false);
+        return;
+      }
+
+      updateField("customer_photo", data.imagePath);
+    } catch {
+      setPhotoError("Unable to upload customer photo.");
+    } finally {
+      setPhotoUploading(false);
+      event.target.value = "";
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -82,7 +121,7 @@ export default function AddCustomerPage() {
                 </h1>
 
                 <p className="mt-2 text-sm text-[#6b6257]">
-                  Create a customer profile with contact details, license
+                  Create a customer profile with a DP, contact details, license
                   information, emergency contact, and rental notes.
                 </p>
               </div>
@@ -108,15 +147,15 @@ export default function AddCustomerPage() {
                     </p>
 
                     <h2 className="mt-4 text-3xl font-black uppercase leading-tight text-white md:text-4xl">
-                      Add Customer.
+                      Add Customer DP.
                       <br />
-                      Rental Ready Profile.
+                      Build the Rental Profile.
                     </h2>
 
                     <div className="mt-6 h-1 w-16 bg-[#d4af37]" />
 
                     <p className="mt-6 font-serif text-xl text-[#d4af37]">
-                      Keep every renter organized before the keys go out.
+                      The customer photo appears on the list and profile page.
                     </p>
                   </div>
                 </div>
@@ -295,59 +334,82 @@ export default function AddCustomerPage() {
                   <section className="sticky top-6 overflow-hidden rounded-3xl border border-[#e7e2d9] bg-white shadow-xl shadow-black/5">
                     <div className="border-b border-[#eee9df] px-6 py-5">
                       <p className="text-sm font-black uppercase tracking-[0.18em] text-[#b98320]">
-                        Customer Preview
+                        Customer DP
                       </p>
 
                       <h3 className="mt-2 font-serif text-2xl font-black text-[#1d1d1f]">
-                        Rental Profile
+                        Profile Photo
                       </h3>
 
                       <p className="mt-2 text-sm text-[#7a7168]">
-                        Confirm the main customer information before saving.
+                        Upload a clear photo to identify this customer quickly.
                       </p>
                     </div>
 
                     <div className="p-6">
-                      <div className="rounded-3xl border border-[#eee9df] bg-[#fbfaf8] p-6">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/15 text-3xl font-black text-[#b98320]">
-                          {form.full_name ? form.full_name.charAt(0).toUpperCase() : "?"}
-                        </div>
+                      <div className="overflow-hidden rounded-3xl border border-[#eee9df] bg-[#fbfaf8]">
+                        {form.customer_photo ? (
+                          <img
+                            src={form.customer_photo}
+                            alt="Customer preview"
+                            className="h-80 w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-80 w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(212,175,55,0.18),transparent_40%),linear-gradient(135deg,#111111,#3a2410)] px-6 text-center">
+                            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#d4af37]/20 text-5xl font-black text-[#d4af37]">
+                              {form.full_name
+                                ? form.full_name.charAt(0).toUpperCase()
+                                : "?"}
+                            </div>
 
-                        <h4 className="mt-5 text-2xl font-black text-[#1d1d1f]">
-                          {form.full_name || "New Customer"}
-                        </h4>
+                            <p className="mt-5 text-lg font-black text-white">
+                              No customer photo yet
+                            </p>
 
-                        <p className="mt-2 text-sm text-[#7a7168]">
-                          {form.phone || "Phone number not added yet"}
-                        </p>
-
-                        {form.is_blacklisted && (
-                          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700">
-                            Warning customer
+                            <p className="mt-2 text-sm text-white/70">
+                              Upload a customer DP below.
+                            </p>
                           </div>
                         )}
                       </div>
 
+                      {photoError && (
+                        <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
+                          {photoError}
+                        </div>
+                      )}
+
+                      <label className="mt-5 flex cursor-pointer items-center justify-center rounded-xl bg-[#0b0b0c] px-6 py-4 text-sm font-black text-white shadow-lg shadow-black/10 transition hover:bg-[#1c1c1e]">
+                        {photoUploading ? "Uploading Photo..." : "Upload Customer Photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={photoUploading}
+                          onChange={handlePhotoUpload}
+                        />
+                      </label>
+
                       <div className="mt-5 rounded-2xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
                         <p className="text-sm font-black text-[#1d1d1f]">
-                          Quick Details
+                          Saved Photo Path
+                        </p>
+
+                        <p className="mt-2 break-all text-sm leading-6 text-[#6b6257]">
+                          {form.customer_photo || "No photo uploaded yet."}
+                        </p>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
+                        <p className="text-sm font-black text-[#1d1d1f]">
+                          Quick Preview
                         </p>
 
                         <div className="mt-3 space-y-2 text-sm text-[#6b6257]">
+                          <PreviewRow label="Name" value={form.full_name} />
+                          <PreviewRow label="Phone" value={form.phone} />
                           <PreviewRow label="WhatsApp" value={form.whatsapp} />
-                          <PreviewRow label="Email" value={form.email} />
-                          <PreviewRow
-                            label="License"
-                            value={form.license_number}
-                          />
-                          <PreviewRow
-                            label="License Expiry"
-                            value={form.license_expiry}
-                          />
-                          <PreviewRow
-                            label="Emergency"
-                            value={form.emergency_contact_phone}
-                          />
+                          <PreviewRow label="License" value={form.license_number} />
                         </div>
                       </div>
                     </div>
