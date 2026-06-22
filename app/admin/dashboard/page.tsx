@@ -328,10 +328,6 @@ export default async function BookingsPage() {
                             View / Print
                           </Link>
 
-                          <BookingActionButtons
-                            bookingId={booking.id}
-                            status={booking.status}
-                          />
                         </div>
                       </div>
                     ))}
