@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import AdminSidebar from "@/app/admin/components/AdminSidebar";
 import AdminMobileHeader from "@/app/admin/components/AdminMobileHeader";
@@ -32,7 +32,27 @@ export default function AddCustomerPage() {
   const [error, setError] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [loading, setLoading] = useState(false);
+
+
+  useEffect(() => {
+    if (!cameraOpen || !videoRef.current || !streamRef.current) return;
+
+    videoRef.current.srcObject = streamRef.current;
+    videoRef.current.play().catch(() => {
+      setCameraError("Camera opened, but the preview could not start.");
+    });
+  }, [cameraOpen]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   function updateField(name: string, value: string | boolean) {
     setForm((previous) => ({
@@ -41,11 +61,7 @@ export default function AddCustomerPage() {
     }));
   }
 
-  async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
+  async function uploadCustomerPhoto(file: File) {
     setPhotoError("");
     setPhotoUploading(true);
 
@@ -71,8 +87,102 @@ export default function AddCustomerPage() {
       setPhotoError("Unable to upload customer photo.");
     } finally {
       setPhotoUploading(false);
-      event.target.value = "";
     }
+  }
+
+  async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    await uploadCustomerPhoto(file);
+    event.target.value = "";
+  }
+
+  async function openCamera() {
+    setCameraError("");
+    setPhotoError("");
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Camera is not available in this browser.");
+      return;
+    }
+
+    try {
+      stopCamera();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      setCameraOpen(true);
+    } catch {
+      setCameraError(
+        "Camera access was blocked. Please allow camera permission and try again."
+      );
+    }
+  }
+
+  function stopCamera() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraOpen(false);
+  }
+
+  async function captureCameraPhoto() {
+    const video = videoRef.current;
+
+    if (!video) {
+      setCameraError("Camera preview is not ready yet.");
+      return;
+    }
+
+    const width = video.videoWidth || 720;
+    const height = video.videoHeight || 720;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      setCameraError("Could not capture photo from camera.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+
+    canvas.toBlob(
+      async (blob) => {
+        if (!blob) {
+          setCameraError("Could not create the captured photo.");
+          return;
+        }
+
+        const file = new File([blob], `customer-photo-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+
+        await uploadCustomerPhoto(file);
+        stopCamera();
+      },
+      "image/jpeg",
+      0.92
+    );
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -389,6 +499,52 @@ export default function AddCustomerPage() {
                           onChange={handlePhotoUpload}
                         />
                       </label>
+
+                      {!cameraOpen ? (
+                        <button
+                          type="button"
+                          onClick={openCamera}
+                          disabled={photoUploading}
+                          className="mt-3 w-full rounded-xl border border-[#d4af37]/40 bg-[#fff9e8] px-6 py-4 text-sm font-black text-[#1d1d1f] shadow-sm transition hover:bg-[#fff2c6] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Take Photo / Use Camera
+                        </button>
+                      ) : (
+                        <div className="mt-5 overflow-hidden rounded-3xl border border-[#e7e2d9] bg-black">
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            muted
+                            playsInline
+                            className="h-72 w-full object-cover"
+                          />
+
+                          <div className="grid gap-3 bg-white p-4 sm:grid-cols-2">
+                            <button
+                              type="button"
+                              onClick={captureCameraPhoto}
+                              disabled={photoUploading}
+                              className="rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {photoUploading ? "Saving Photo..." : "Capture Photo"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={stopCamera}
+                              className="rounded-xl border border-[#e7e2d9] bg-white px-5 py-3 text-sm font-black text-[#1d1d1f] shadow-sm hover:bg-[#fbfaf8]"
+                            >
+                              Close Camera
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {cameraError && (
+                        <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
+                          {cameraError}
+                        </div>
+                      )}
 
                       <div className="mt-5 rounded-2xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
                         <p className="text-sm font-black text-[#1d1d1f]">
