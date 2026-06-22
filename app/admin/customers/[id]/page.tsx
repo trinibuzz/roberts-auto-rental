@@ -146,12 +146,21 @@ export default async function CustomerProfilePage({
                 </p>
               </div>
 
-              <Link
-                href="/admin/customers"
-                className="inline-flex items-center justify-center rounded-xl border border-[#e7e2d9] bg-white px-6 py-4 text-sm font-black text-[#1d1d1f] shadow-sm transition hover:bg-[#fbfaf8]"
-              >
-                Back to Customers
-              </Link>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href={`/admin/customers/${customer.id}/edit`}
+                  className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-6 py-4 text-sm font-black text-white shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  Edit Customer
+                </Link>
+
+                <Link
+                  href="/admin/customers"
+                  className="inline-flex items-center justify-center rounded-xl border border-[#e7e2d9] bg-white px-6 py-4 text-sm font-black text-[#1d1d1f] shadow-sm transition hover:bg-[#fbfaf8]"
+                >
+                  Back to Customers
+                </Link>
+              </div>
             </div>
           </header>
 
@@ -401,6 +410,13 @@ export default async function CustomerProfilePage({
                     <p className="mt-2 text-sm text-[#7a7168]">
                       This photo appears in the customer list and booking flow.
                     </p>
+
+                    <Link
+                      href={`/admin/customers/${customer.id}/edit`}
+                      className="mt-4 inline-flex rounded-xl border border-[#e7e2d9] bg-white px-5 py-3 text-sm font-black text-[#1d1d1f] shadow-sm hover:bg-[#fbfaf8]"
+                    >
+                      Upload / Change Photo
+                    </Link>
                   </div>
 
                   <div className="p-6">

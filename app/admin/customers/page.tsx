@@ -216,7 +216,7 @@ export default async function CustomersPage() {
                           <th className="px-7 py-5">Bookings</th>
                           <th className="px-7 py-5">Balance</th>
                           <th className="px-7 py-5">Status</th>
-                          <th className="px-7 py-5 text-right">Profile</th>
+                          <th className="px-7 py-5 text-right">Actions</th>
                         </tr>
                       </thead>
 
@@ -290,12 +290,21 @@ export default async function CustomersPage() {
                             </td>
 
                             <td className="px-7 py-6 align-top text-right">
-                              <Link
-                                href={`/admin/customers/${customer.id}`}
-                                className="inline-flex rounded-xl bg-[#0b0b0c] px-4 py-3 text-xs font-black text-white shadow-sm hover:bg-[#1c1c1e]"
-                              >
-                                View Profile
-                              </Link>
+                              <div className="flex justify-end gap-2">
+                                <Link
+                                  href={`/admin/customers/${customer.id}`}
+                                  className="inline-flex rounded-xl bg-[#0b0b0c] px-4 py-3 text-xs font-black text-white shadow-sm hover:bg-[#1c1c1e]"
+                                >
+                                  View
+                                </Link>
+
+                                <Link
+                                  href={`/admin/customers/${customer.id}/edit`}
+                                  className="inline-flex rounded-xl border border-[#e7e2d9] bg-white px-4 py-3 text-xs font-black text-[#1d1d1f] shadow-sm hover:bg-[#fbfaf8]"
+                                >
+                                  Edit
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -305,10 +314,9 @@ export default async function CustomersPage() {
 
                   <div className="grid gap-4 p-5 xl:hidden">
                     {customers.map((customer) => (
-                      <Link
+                      <div
                         key={customer.id}
-                        href={`/admin/customers/${customer.id}`}
-                        className="block rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-5 transition hover:border-[#d4af37]/50 hover:bg-white"
+                        className="rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-5 transition hover:border-[#d4af37]/50 hover:bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-4">
@@ -368,10 +376,22 @@ export default async function CustomersPage() {
                           </p>
                         </div>
 
-                        <div className="mt-5 text-sm font-black text-[#b98320]">
-                          View full customer profile →
+                        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                          <Link
+                            href={`/admin/customers/${customer.id}`}
+                            className="rounded-xl bg-[#0b0b0c] px-4 py-3 text-center text-sm font-black text-white"
+                          >
+                            View Profile
+                          </Link>
+
+                          <Link
+                            href={`/admin/customers/${customer.id}/edit`}
+                            className="rounded-xl border border-[#e7e2d9] bg-white px-4 py-3 text-center text-sm font-black text-[#1d1d1f] shadow-sm hover:bg-[#fbfaf8]"
+                          >
+                            Edit Customer
+                          </Link>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </>
