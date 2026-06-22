@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -14,6 +16,7 @@ type Vehicle = {
   model: string | null;
   year: number | null;
   plate_number: string;
+  vehicle_photo: string | null;
   status: string;
   daily_rate: string | number | null;
   current_mileage: number | null;
@@ -45,6 +48,7 @@ export default async function VehiclesPage() {
       model,
       year,
       plate_number,
+      vehicle_photo,
       status,
       daily_rate,
       current_mileage,
@@ -228,15 +232,21 @@ export default async function VehiclesPage() {
                             className="transition hover:bg-[#fbfaf8]"
                           >
                             <td className="px-7 py-6 align-top">
-                              <p className="font-black text-[#1d1d1f]">
-                                {vehicle.vehicle_name}
-                              </p>
+                              <div className="flex items-start gap-4">
+                                <VehiclePhoto vehicle={vehicle} size="lg" />
 
-                              <p className="mt-1 text-xs uppercase tracking-wide text-[#8a8178]">
-                                {[vehicle.year, vehicle.make, vehicle.model]
-                                  .filter(Boolean)
-                                  .join(" ") || "Vehicle details not set"}
-                              </p>
+                                <div>
+                                  <p className="font-black text-[#1d1d1f]">
+                                    {vehicle.vehicle_name}
+                                  </p>
+
+                                  <p className="mt-1 text-xs uppercase tracking-wide text-[#8a8178]">
+                                    {[vehicle.year, vehicle.make, vehicle.model]
+                                      .filter(Boolean)
+                                      .join(" ") || "Vehicle details not set"}
+                                  </p>
+                                </div>
+                              </div>
                             </td>
 
                             <td className="px-7 py-6 align-top">
@@ -301,16 +311,20 @@ export default async function VehiclesPage() {
                         className="rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-5"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-lg font-black text-[#1d1d1f]">
-                              {vehicle.vehicle_name}
-                            </p>
+                          <div className="flex items-start gap-4">
+                            <VehiclePhoto vehicle={vehicle} size="md" />
 
-                            <p className="mt-1 text-sm text-[#7a7168]">
-                              {[vehicle.year, vehicle.make, vehicle.model]
-                                .filter(Boolean)
-                                .join(" ") || "Vehicle details not set"}
-                            </p>
+                            <div>
+                              <p className="text-lg font-black text-[#1d1d1f]">
+                                {vehicle.vehicle_name}
+                              </p>
+
+                              <p className="mt-1 text-sm text-[#7a7168]">
+                                {[vehicle.year, vehicle.make, vehicle.model]
+                                  .filter(Boolean)
+                                  .join(" ") || "Vehicle details not set"}
+                              </p>
+                            </div>
                           </div>
 
                           <StatusBadge status={vehicle.status} />
@@ -410,6 +424,34 @@ function StatCard({
       <p className="mt-3 text-4xl font-black text-[#1d1d1f]">{value}</p>
 
       <p className="mt-2 text-sm text-[#7a7168]">{note}</p>
+    </div>
+  );
+}
+
+function VehiclePhoto({
+  vehicle,
+  size,
+}: {
+  vehicle: Pick<Vehicle, "vehicle_name" | "vehicle_photo">;
+  size: "md" | "lg";
+}) {
+  const sizeClasses = size === "lg" ? "h-16 w-24" : "h-16 w-20";
+
+  if (vehicle.vehicle_photo) {
+    return (
+      <img
+        src={vehicle.vehicle_photo}
+        alt={vehicle.vehicle_name}
+        className={`${sizeClasses} rounded-2xl border border-[#eee9df] object-cover shadow-sm`}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClasses} flex items-center justify-center rounded-2xl bg-[#d4af37]/15 text-xl font-black text-[#b98320]`}
+    >
+      🚗
     </div>
   );
 }
