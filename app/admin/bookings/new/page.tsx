@@ -13,6 +13,8 @@ type Customer = {
   id: number;
   full_name: string;
   phone: string;
+  whatsapp?: string | null;
+  email?: string | null;
 };
 
 type Vehicle = {
@@ -54,6 +56,27 @@ export default function NewBookingPage() {
     notes: "",
   });
 
+  const [quickCustomer, setQuickCustomer] = useState({
+    full_name: "",
+    phone: "",
+    whatsapp: "",
+    email: "",
+    address: "",
+    date_of_birth: "",
+    license_number: "",
+    license_expiry: "",
+    id_number: "",
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
+    notes: "",
+    is_blacklisted: false,
+  });
+
+  const [showQuickCustomer, setShowQuickCustomer] = useState(false);
+  const [customerSaving, setCustomerSaving] = useState(false);
+  const [customerError, setCustomerError] = useState("");
+  const [customerSuccess, setCustomerSuccess] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,22 +84,15 @@ export default function NewBookingPage() {
     (vehicle) => String(vehicle.id) === String(form.vehicle_id)
   );
 
+  const selectedCustomer = customers.find(
+    (customer) => String(customer.id) === String(form.customer_id)
+  );
+
   useEffect(() => {
     async function loadData() {
       try {
-        const customerResponse = await fetch("/api/admin/customers");
-        const customerData = await customerResponse.json();
-
-        if (customerData.success) {
-          setCustomers(customerData.customers);
-        }
-
-        const vehicleResponse = await fetch("/api/admin/vehicles");
-        const vehicleData = await vehicleResponse.json();
-
-        if (vehicleData.success) {
-          setVehicles(vehicleData.vehicles);
-        }
+        await loadCustomers();
+        await loadVehicles();
       } catch {
         setError("Unable to load customers and vehicles.");
       }
@@ -84,6 +100,30 @@ export default function NewBookingPage() {
 
     loadData();
   }, []);
+
+  async function loadCustomers() {
+    const customerResponse = await fetch("/api/admin/customers");
+    const customerData = await customerResponse.json();
+
+    if (customerData.success) {
+      setCustomers(customerData.customers);
+      return customerData.customers as Customer[];
+    }
+
+    throw new Error(customerData.message || "Failed to load customers.");
+  }
+
+  async function loadVehicles() {
+    const vehicleResponse = await fetch("/api/admin/vehicles");
+    const vehicleData = await vehicleResponse.json();
+
+    if (vehicleData.success) {
+      setVehicles(vehicleData.vehicles);
+      return vehicleData.vehicles as Vehicle[];
+    }
+
+    throw new Error(vehicleData.message || "Failed to load vehicles.");
+  }
 
   function updateField(name: string, value: string) {
     const updatedForm = {
@@ -106,6 +146,13 @@ export default function NewBookingPage() {
       ...updatedForm,
       ...calculated,
     });
+  }
+
+  function updateQuickCustomerField(name: string, value: string | boolean) {
+    setQuickCustomer((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   }
 
   function calculateTotals(currentForm: typeof form) {
@@ -134,6 +181,73 @@ export default function NewBookingPage() {
       total_amount: String(total < 0 ? 0 : total),
       balance: String(balance < 0 ? 0 : balance),
     };
+  }
+
+  async function handleQuickCustomerSubmit() {
+    setCustomerError("");
+    setCustomerSuccess("");
+
+    if (!quickCustomer.full_name.trim() || !quickCustomer.phone.trim()) {
+      setCustomerError("Customer name and phone number are required.");
+      return;
+    }
+
+    setCustomerSaving(true);
+
+    try {
+      const response = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quickCustomer),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setCustomerError(data.message || "Failed to add customer.");
+        setCustomerSaving(false);
+        return;
+      }
+
+      const refreshedCustomers = await loadCustomers();
+
+      const newCustomer = refreshedCustomers.find(
+        (customer) =>
+          customer.phone === quickCustomer.phone ||
+          customer.full_name.toLowerCase() === quickCustomer.full_name.toLowerCase()
+      );
+
+      if (newCustomer) {
+        setForm((previous) => ({
+          ...previous,
+          customer_id: String(newCustomer.id),
+        }));
+      }
+
+      setCustomerSuccess("Customer added and selected for this booking.");
+      setShowQuickCustomer(false);
+      setQuickCustomer({
+        full_name: "",
+        phone: "",
+        whatsapp: "",
+        email: "",
+        address: "",
+        date_of_birth: "",
+        license_number: "",
+        license_expiry: "",
+        id_number: "",
+        emergency_contact_name: "",
+        emergency_contact_phone: "",
+        notes: "",
+        is_blacklisted: false,
+      });
+    } catch {
+      setCustomerError("Unable to connect to the server.");
+    } finally {
+      setCustomerSaving(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -182,8 +296,8 @@ export default function NewBookingPage() {
                 </h1>
 
                 <p className="mt-2 text-sm text-[#6b6257]">
-                  Create a rental booking, reserve a vehicle, calculate charges,
-                  and confirm the correct vehicle image.
+                  Create a rental booking, add a customer if needed, reserve a
+                  vehicle, and confirm the correct vehicle image.
                 </p>
               </div>
 
@@ -208,15 +322,15 @@ export default function NewBookingPage() {
                     </p>
 
                     <h2 className="mt-4 text-3xl font-black uppercase leading-tight text-white md:text-4xl">
-                      Create Booking.
+                      One Stop Booking.
                       <br />
-                      Confirm the Vehicle.
+                      Customer, Vehicle, Payment.
                     </h2>
 
                     <div className="mt-6 h-1 w-16 bg-[#d4af37]" />
 
                     <p className="mt-6 font-serif text-xl text-[#d4af37]">
-                      Staff can now see the vehicle photo before saving.
+                      Add a customer without leaving the booking screen.
                     </p>
                   </div>
                 </div>
@@ -236,7 +350,178 @@ export default function NewBookingPage() {
                     number="1"
                     title="Customer & Vehicle"
                     subtitle="Select the renter and the exact vehicle being reserved."
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowQuickCustomer((current) => !current);
+                          setCustomerError("");
+                          setCustomerSuccess("");
+                        }}
+                        className="rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10"
+                      >
+                        {showQuickCustomer ? "Close Customer Form" : "+ Add New Customer"}
+                      </button>
+                    }
                   >
+                    {customerSuccess && (
+                      <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700">
+                        {customerSuccess}
+                      </div>
+                    )}
+
+                    {customerError && (
+                      <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
+                        {customerError}
+                      </div>
+                    )}
+
+                    {showQuickCustomer && (
+                      <div className="mb-6 rounded-3xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
+                        <div className="mb-5">
+                          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#b98320]">
+                            Quick Add Customer
+                          </p>
+
+                          <h4 className="mt-2 font-serif text-2xl font-black text-[#1d1d1f]">
+                            Add customer without leaving booking
+                          </h4>
+
+                          <p className="mt-1 text-sm text-[#7a7168]">
+                            Name and phone are required. Other fields can be
+                            completed now or updated later.
+                          </p>
+                        </div>
+
+                        <div className="grid gap-5 md:grid-cols-2">
+                          <Input
+                            label="Full Name"
+                            name="full_name"
+                            value={quickCustomer.full_name}
+                            onChange={updateQuickCustomerField}
+                            required
+                            placeholder="Customer full name"
+                          />
+
+                          <Input
+                            label="Phone"
+                            name="phone"
+                            value={quickCustomer.phone}
+                            onChange={updateQuickCustomerField}
+                            required
+                            placeholder="868-000-0000"
+                          />
+
+                          <Input
+                            label="WhatsApp"
+                            name="whatsapp"
+                            value={quickCustomer.whatsapp}
+                            onChange={updateQuickCustomerField}
+                            placeholder="868-000-0000"
+                          />
+
+                          <Input
+                            label="Email"
+                            name="email"
+                            value={quickCustomer.email}
+                            onChange={updateQuickCustomerField}
+                            type="email"
+                          />
+
+                          <Input
+                            label="License Number"
+                            name="license_number"
+                            value={quickCustomer.license_number}
+                            onChange={updateQuickCustomerField}
+                          />
+
+                          <Input
+                            label="License Expiry"
+                            name="license_expiry"
+                            value={quickCustomer.license_expiry}
+                            onChange={updateQuickCustomerField}
+                            type="date"
+                          />
+
+                          <Input
+                            label="ID Number"
+                            name="id_number"
+                            value={quickCustomer.id_number}
+                            onChange={updateQuickCustomerField}
+                          />
+
+                          <Input
+                            label="Date of Birth"
+                            name="date_of_birth"
+                            value={quickCustomer.date_of_birth}
+                            onChange={updateQuickCustomerField}
+                            type="date"
+                          />
+
+                          <Input
+                            label="Emergency Contact Name"
+                            name="emergency_contact_name"
+                            value={quickCustomer.emergency_contact_name}
+                            onChange={updateQuickCustomerField}
+                          />
+
+                          <Input
+                            label="Emergency Contact Phone"
+                            name="emergency_contact_phone"
+                            value={quickCustomer.emergency_contact_phone}
+                            onChange={updateQuickCustomerField}
+                          />
+                        </div>
+
+                        <div className="mt-5">
+                          <label className="block text-sm font-black text-[#4b443d]">
+                            Address
+                          </label>
+
+                          <textarea
+                            value={quickCustomer.address}
+                            onChange={(event) =>
+                              updateQuickCustomerField("address", event.target.value)
+                            }
+                            className="mt-2 min-h-24 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-3 text-sm font-semibold text-[#1d1d1f] outline-none transition focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                          />
+                        </div>
+
+                        <div className="mt-5">
+                          <label className="block text-sm font-black text-[#4b443d]">
+                            Customer Notes
+                          </label>
+
+                          <textarea
+                            value={quickCustomer.notes}
+                            onChange={(event) =>
+                              updateQuickCustomerField("notes", event.target.value)
+                            }
+                            className="mt-2 min-h-24 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-3 text-sm font-semibold text-[#1d1d1f] outline-none transition focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                          />
+                        </div>
+
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowQuickCustomer(false)}
+                            className="rounded-xl border border-[#e7e2d9] bg-white px-6 py-4 text-center text-sm font-black text-[#1d1d1f] shadow-sm hover:bg-[#fbfaf8]"
+                          >
+                            Cancel Customer
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={customerSaving}
+                            onClick={handleQuickCustomerSubmit}
+                            className="rounded-xl bg-[#0b0b0c] px-7 py-4 text-sm font-black text-white shadow-lg shadow-black/10 transition hover:bg-[#1c1c1e] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {customerSaving ? "Saving Customer..." : "Save & Select Customer"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid gap-5 md:grid-cols-2">
                       <SelectField
                         label="Customer"
@@ -441,15 +726,15 @@ export default function NewBookingPage() {
                   <section className="sticky top-6 overflow-hidden rounded-3xl border border-[#e7e2d9] bg-white shadow-xl shadow-black/5">
                     <div className="border-b border-[#eee9df] px-6 py-5">
                       <p className="text-sm font-black uppercase tracking-[0.18em] text-[#b98320]">
-                        Selected Vehicle
+                        Booking Preview
                       </p>
 
                       <h3 className="mt-2 font-serif text-2xl font-black text-[#1d1d1f]">
-                        Booking Photo
+                        Vehicle & Customer
                       </h3>
 
                       <p className="mt-2 text-sm text-[#7a7168]">
-                        This image comes from the vehicle record.
+                        Confirm the selected renter and vehicle before saving.
                       </p>
                     </div>
 
@@ -480,7 +765,35 @@ export default function NewBookingPage() {
 
                       <div className="mt-5 rounded-2xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
                         <p className="text-sm font-black text-[#1d1d1f]">
-                          Vehicle Details
+                          Customer
+                        </p>
+
+                        {selectedCustomer ? (
+                          <div className="mt-3 space-y-2 text-sm text-[#6b6257]">
+                            <p>
+                              <span className="font-black text-[#1d1d1f]">
+                                Name:
+                              </span>{" "}
+                              {selectedCustomer.full_name}
+                            </p>
+
+                            <p>
+                              <span className="font-black text-[#1d1d1f]">
+                                Phone:
+                              </span>{" "}
+                              {selectedCustomer.phone}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="mt-3 text-sm text-[#6b6257]">
+                            Customer details will appear here after selection.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-5 rounded-2xl border border-[#e7e2d9] bg-[#fff9e8] p-5">
+                        <p className="text-sm font-black text-[#1d1d1f]">
+                          Vehicle
                         </p>
 
                         {selectedVehicle ? (
@@ -575,26 +888,32 @@ function FormSection({
   title,
   subtitle,
   children,
+  action,
 }: {
   number: string;
   title: string;
   subtitle: string;
   children: ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <section className="rounded-3xl border border-[#e7e2d9] bg-white p-6 shadow-xl shadow-black/5">
-      <div className="mb-6 flex items-center gap-4 border-b border-[#eee9df] pb-5">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#d4af37]/15 text-xl font-black text-[#b98320]">
-          {number}
+      <div className="mb-6 flex flex-col gap-4 border-b border-[#eee9df] pb-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#d4af37]/15 text-xl font-black text-[#b98320]">
+            {number}
+          </div>
+
+          <div>
+            <h3 className="font-serif text-2xl font-black text-[#1d1d1f]">
+              {title}
+            </h3>
+
+            <p className="text-sm text-[#7a7168]">{subtitle}</p>
+          </div>
         </div>
 
-        <div>
-          <h3 className="font-serif text-2xl font-black text-[#1d1d1f]">
-            {title}
-          </h3>
-
-          <p className="text-sm text-[#7a7168]">{subtitle}</p>
-        </div>
+        {action}
       </div>
 
       {children}
@@ -609,6 +928,7 @@ function Input({
   onChange,
   type = "text",
   required = false,
+  placeholder = "",
 }: {
   label: string;
   name: string;
@@ -616,6 +936,7 @@ function Input({
   onChange: (name: string, value: string) => void;
   type?: string;
   required?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -624,6 +945,7 @@ function Input({
       <input
         type={type}
         required={required}
+        placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(name, event.target.value)}
         className="mt-2 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-3 text-sm font-semibold text-[#1d1d1f] outline-none transition focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
