@@ -110,7 +110,12 @@ export default async function VehiclesPage() {
 
       <main className="lg:pl-72">
         <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <AdminPageHero variant="vehicles" />
+          <AdminPageHero
+  variant="vehicles"
+  label="Fleet Management"
+  title="Vehicles"
+  subtitle="Manage Roberts Auto Rental vehicles, availability, mileage, service tracking, and rental status from one premium dashboard."
+/>
 
           <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-3xl border border-white/80 bg-white p-5 shadow-sm">
