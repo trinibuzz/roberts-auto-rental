@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth";
-import BookingActionButtons from "./BookingActionButtons";
 import AdminSidebar from "@/app/admin/components/AdminSidebar";
 import AdminMobileHeader from "@/app/admin/components/AdminMobileHeader";
 
@@ -259,10 +258,7 @@ export default async function BookingsPage() {
                                   View / Print
                                 </Link>
 
-                                <BookingActionButtons
-                                  bookingId={booking.id}
-                                  status={booking.status}
-                                />
+                               
                               </div>
                             </td>
                           </tr>
