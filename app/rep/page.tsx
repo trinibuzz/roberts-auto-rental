@@ -103,51 +103,42 @@ export default async function RepDashboardPage() {
   );
 
   const recentBookings = recentRows as BookingRow[];
+  const heroBooking = recentBookings.find((booking) => booking.vehicle_photo);
+  const heroImage = heroBooking?.vehicle_photo || "/images/rep-car-hero.jpg";
 
   return (
     <main className="min-h-screen bg-[#f8f7f4] text-[#1d1d1f]">
       <section className="mx-auto min-h-screen max-w-5xl pb-24">
-        <header className="sticky top-0 z-20 border-b border-[#e7e2d9] bg-white/95 px-5 py-4 shadow-sm backdrop-blur">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
-                Roberts Rep Mode
-              </p>
+        <header className="sticky top-0 z-20 border-b border-[#e7e2d9] bg-white/95 px-4 py-4 shadow-sm backdrop-blur">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-[#b98320]">
+              Roberts Rep Mode
+            </p>
 
-              <h1 className="mt-1 font-serif text-2xl font-black text-[#1d1d1f]">
-                Quick Rental Desk
-              </h1>
-            </div>
-
-            <Link
-              href="/admin/dashboard"
-              className="rounded-full border border-[#e7e2d9] bg-white px-4 py-3 text-xs font-black text-[#1d1d1f] shadow-sm"
-            >
-              Office
-            </Link>
+            <h1 className="mt-1 font-serif text-3xl font-black text-[#1d1d1f]">
+              Mobile Rental App
+            </h1>
           </div>
         </header>
 
-        <div className="space-y-5 p-5">
-          <section className="overflow-hidden rounded-3xl bg-black shadow-xl">
-            <div className="relative min-h-[210px] overflow-hidden px-6 py-7">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(212,175,55,0.30),transparent_34%),linear-gradient(135deg,#050505_0%,#151515_45%,#3a2410_100%)]" />
+        <div className="space-y-5 p-4 md:p-6">
+          <section
+            className="relative overflow-hidden rounded-[2rem] border border-[#d8d0c4] bg-[#1d1d1f] shadow-xl"
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.35), rgba(0,0,0,0.06)), url("${heroImage}")`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          >
+            <div className="min-h-[220px] px-6 py-8 md:min-h-[270px] md:px-10">
+              <h2 className="max-w-xl text-5xl font-light tracking-tight text-white drop-shadow-lg md:text-7xl">
+                Book A Car
+              </h2>
 
-              <div className="relative">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[#d4af37]">
-                  Fast Booking Flow
-                </p>
-
-                <h2 className="mt-4 max-w-xl text-3xl font-black uppercase leading-tight text-white">
-                  Built for phone and tablet use.
-                </h2>
-
-                <p className="mt-4 max-w-lg text-sm leading-6 text-white/75">
-                  Keep the full office system on the PC. Use this screen for
-                  quick bookings, pickups, returns, customer checks, and vehicle
-                  handover photos.
-                </p>
-              </div>
+              <p className="mt-4 max-w-lg text-base font-semibold leading-7 text-white/90">
+                Fast phone and tablet workflow for bookings, pickups, returns,
+                and vehicle checks.
+              </p>
             </div>
           </section>
 
@@ -210,23 +201,9 @@ export default async function RepDashboardPage() {
               href="/rep/vehicles"
               icon="🚗"
             />
-
-            <ActionCard
-              title="Add Customer"
-              note="Create a customer with phone camera photo."
-              href="/admin/customers/new"
-              icon="👤"
-            />
-
-            <ActionCard
-              title="Office Dashboard"
-              note="Open the full PC admin system."
-              href="/admin/dashboard"
-              icon="▣"
-            />
           </section>
 
-          <section className="overflow-hidden rounded-3xl border border-[#e7e2d9] bg-white shadow-xl shadow-black/5">
+          <section className="overflow-hidden rounded-[1.8rem] border border-[#e7e2d9] bg-white shadow-xl shadow-black/5">
             <div className="border-b border-[#eee9df] px-5 py-4">
               <h3 className="font-serif text-2xl font-black text-[#1d1d1f]">
                 Recent Bookings
@@ -281,8 +258,8 @@ export default async function RepDashboardPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2">
             <BottomNavLink href="/rep" label="Home" icon="⌂" active />
             <BottomNavLink href="/rep/bookings/new" label="Book" icon="+" />
-            <BottomNavLink href="/rep/vehicles" label="Cars" icon="🚗" />
-            <BottomNavLink href="/admin/dashboard" label="Office" icon="▣" />
+            <BottomNavLink href="/rep/pickups" label="Pickups" icon="↗" />
+            <BottomNavLink href="/rep/returns" label="Returns" icon="↙" />
           </div>
         </nav>
       </section>
@@ -309,7 +286,7 @@ function QuickStat({
   };
 
   return (
-    <div className={`rounded-3xl p-5 shadow-xl shadow-black/5 ${styles[tone]}`}>
+    <div className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 ${styles[tone]}`}>
       <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">
         {title}
       </p>
@@ -337,7 +314,7 @@ function ActionCard({
   return (
     <Link
       href={href}
-      className={`rounded-3xl p-5 shadow-xl shadow-black/5 transition active:scale-[0.98] ${
+      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 transition active:scale-[0.98] ${
         primary
           ? "bg-gradient-to-r from-[#d4af37] to-[#b98320] text-white"
           : "border border-[#e7e2d9] bg-white text-[#1d1d1f]"

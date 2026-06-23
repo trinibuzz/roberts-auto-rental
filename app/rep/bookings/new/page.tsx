@@ -121,6 +121,12 @@ export default function RepNewBookingPage() {
     (vehicle) => String(vehicle.id) === form.vehicle_id
   );
 
+  const firstVehiclePhoto =
+    vehicles.find((vehicle) => vehicle.vehicle_photo)?.vehicle_photo || "";
+
+  const heroImage =
+    selectedVehicle?.vehicle_photo || firstVehiclePhoto || "/images/rep-car-hero.jpg";
+
   const filteredCustomers = useMemo(() => {
     const search = customerSearch.trim().toLowerCase();
 
@@ -334,45 +340,39 @@ export default function RepNewBookingPage() {
   return (
     <main className="min-h-screen bg-[#f8f7f4] pb-28 text-[#1d1d1f]">
       <header className="sticky top-0 z-20 border-b border-[#e7e2d9] bg-white/95 px-5 py-4 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
               Roberts Rep Mode
             </p>
 
-            <h1 className="mt-1 font-serif text-2xl font-black">
+            <h1 className="mt-1 font-serif text-3xl font-black">
               Quick Booking
             </h1>
           </div>
 
           <Link
             href="/rep"
-            className="rounded-full border border-[#e7e2d9] bg-white px-4 py-3 text-xs font-black text-[#1d1d1f] shadow-sm"
+            className="rounded-full border border-[#e7e2d9] bg-white px-6 py-4 text-sm font-black text-[#1d1d1f] shadow-sm"
           >
             Home
           </Link>
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl space-y-5 p-5">
-        <section className="overflow-hidden rounded-3xl bg-black shadow-xl">
-          <div className="relative min-h-[170px] overflow-hidden px-6 py-7">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(212,175,55,0.30),transparent_34%),linear-gradient(135deg,#050505_0%,#151515_45%,#3a2410_100%)]" />
-
-            <div className="relative">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#d4af37]">
-                Step {currentStep} of 5
-              </p>
-
-              <h2 className="mt-3 text-3xl font-black uppercase leading-tight text-white">
-                {steps[currentStep - 1]}
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-white/75">
-                Fast mobile flow for staff to create a booking quickly from a
-                phone or tablet.
-              </p>
-            </div>
+      <form onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
+        <section
+          className="relative overflow-hidden rounded-[2rem] border border-[#d8d0c4] bg-[#1d1d1f] shadow-xl"
+          style={{
+            backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.25), rgba(0,0,0,0.06)), url("${heroImage}")`,
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+          }}
+        >
+          <div className="min-h-[190px] px-6 py-8 md:min-h-[230px] md:px-10">
+            <h2 className="text-5xl font-light tracking-tight text-white drop-shadow-lg md:text-7xl">
+              Book A Car
+            </h2>
           </div>
         </section>
 
@@ -391,10 +391,10 @@ export default function RepNewBookingPage() {
         ) : (
           <>
             {currentStep === 1 && (
-              <section className="rounded-3xl border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
+              <section className="min-h-[54vh] rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5 md:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-serif text-2xl font-black">
+                    <h3 className="font-serif text-3xl font-black">
                       Select Customer
                     </h3>
                     <p className="mt-1 text-sm text-[#7a7168]">
@@ -465,7 +465,7 @@ export default function RepNewBookingPage() {
                       type="button"
                       onClick={saveQuickCustomer}
                       disabled={customerSaving}
-                      className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-4 text-sm font-black text-white disabled:opacity-60"
+                      className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-5 text-base font-black text-white disabled:opacity-60"
                     >
                       {customerSaving ? "Saving Customer..." : "Save & Select Customer"}
                     </button>
@@ -475,8 +475,8 @@ export default function RepNewBookingPage() {
                 <input
                   value={customerSearch}
                   onChange={(event) => setCustomerSearch(event.target.value)}
-                  placeholder="Search by name, phone, or WhatsApp..."
-                  className="mt-5 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-4 text-base font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                  placeholder="Start typing a name, phone, or WhatsApp..."
+                  className="mt-6 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-xl font-medium outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
                 />
 
                 <div className="mt-5 grid gap-3">
@@ -488,7 +488,7 @@ export default function RepNewBookingPage() {
                         updateField("customer_id", String(customer.id));
                         setCustomerSearch(customer.full_name);
                       }}
-                      className={`rounded-3xl border p-4 text-left shadow-sm transition active:scale-[0.99] ${
+                      className={`rounded-[1.6rem] border-2 p-4 text-left shadow-sm transition active:scale-[0.99] ${
                         String(customer.id) === form.customer_id
                           ? "border-[#d4af37] bg-[#fff9e8]"
                           : "border-[#eee9df] bg-white"
@@ -520,8 +520,8 @@ export default function RepNewBookingPage() {
             )}
 
             {currentStep === 2 && (
-              <section className="rounded-3xl border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
-                <h3 className="font-serif text-2xl font-black">
+              <section className="min-h-[54vh] rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5 md:p-7">
+                <h3 className="font-serif text-3xl font-black">
                   Select Vehicle
                 </h3>
                 <p className="mt-1 text-sm text-[#7a7168]">
@@ -532,7 +532,7 @@ export default function RepNewBookingPage() {
                   value={vehicleSearch}
                   onChange={(event) => setVehicleSearch(event.target.value)}
                   placeholder="Search vehicle, plate, make or model..."
-                  className="mt-5 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-4 text-base font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                  className="mt-6 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-xl font-medium outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
                 />
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -593,8 +593,8 @@ export default function RepNewBookingPage() {
             )}
 
             {currentStep === 3 && (
-              <section className="rounded-3xl border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
-                <h3 className="font-serif text-2xl font-black">
+              <section className="min-h-[54vh] rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5 md:p-7">
+                <h3 className="font-serif text-3xl font-black">
                   Pickup & Return
                 </h3>
                 <p className="mt-1 text-sm text-[#7a7168]">
@@ -648,8 +648,8 @@ export default function RepNewBookingPage() {
             )}
 
             {currentStep === 4 && (
-              <section className="rounded-3xl border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
-                <h3 className="font-serif text-2xl font-black">
+              <section className="min-h-[54vh] rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5 md:p-7">
+                <h3 className="font-serif text-3xl font-black">
                   Rate & Payment
                 </h3>
                 <p className="mt-1 text-sm text-[#7a7168]">
@@ -701,7 +701,7 @@ export default function RepNewBookingPage() {
                     <select
                       value={form.status}
                       onChange={(event) => updateField("status", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-4 text-base font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                      className="mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
                     >
                       <option value="confirmed">Confirmed</option>
                       <option value="reserved">Reserved</option>
@@ -720,8 +720,8 @@ export default function RepNewBookingPage() {
 
             {currentStep === 5 && (
               <section className="space-y-4">
-                <div className="rounded-3xl border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
-                  <h3 className="font-serif text-2xl font-black">
+                <div className="min-h-[54vh] rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5 md:p-7">
+                  <h3 className="font-serif text-3xl font-black">
                     Confirm Booking
                   </h3>
                   <p className="mt-1 text-sm text-[#7a7168]">
@@ -769,7 +769,7 @@ export default function RepNewBookingPage() {
                       <textarea
                         value={form.notes}
                         onChange={(event) => updateField("notes", event.target.value)}
-                        className="mt-2 min-h-28 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-4 text-base font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+                        className="mt-2 min-h-28 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
                         placeholder="Optional booking notes..."
                       />
                     </label>
@@ -781,12 +781,12 @@ export default function RepNewBookingPage() {
         )}
 
         <section className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#e7e2d9] bg-white/95 px-4 py-3 shadow-2xl backdrop-blur">
-          <div className="mx-auto flex max-w-4xl gap-3">
+          <div className="mx-auto flex max-w-5xl gap-3">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={goBack}
-                className="flex-1 rounded-2xl border border-[#e7e2d9] bg-white px-5 py-4 text-sm font-black text-[#1d1d1f]"
+                className="flex-1 rounded-2xl border border-[#e7e2d9] bg-white px-5 py-5 text-base font-black text-[#1d1d1f]"
               >
                 Back
               </button>
@@ -803,7 +803,7 @@ export default function RepNewBookingPage() {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex-[1.5] rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-4 text-sm font-black text-white shadow-lg shadow-black/10"
+                className="flex-[1.5] rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-5 text-base font-black text-white shadow-lg shadow-black/10"
               >
                 Next
               </button>
@@ -811,7 +811,7 @@ export default function RepNewBookingPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-[1.5] rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-4 text-sm font-black text-white shadow-lg shadow-black/10 disabled:opacity-60"
+                className="flex-[1.5] rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-5 text-base font-black text-white shadow-lg shadow-black/10 disabled:opacity-60"
               >
                 {saving ? "Saving..." : "Save Booking"}
               </button>
@@ -825,7 +825,7 @@ export default function RepNewBookingPage() {
 
 function StepDots({ currentStep }: { currentStep: number }) {
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-5 gap-2 px-1">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const active = stepNumber <= currentStep;
@@ -838,7 +838,7 @@ function StepDots({ currentStep }: { currentStep: number }) {
               }`}
             />
             <p
-              className={`mt-2 hidden text-[10px] font-black uppercase tracking-wide sm:block ${
+              className={`mt-2 text-center text-[10px] font-black uppercase tracking-wide md:text-xs ${
                 active ? "text-[#b98320]" : "text-[#9a9085]"
               }`}
             >
@@ -873,7 +873,7 @@ function Input({
         required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-[#e7e2d9] bg-white px-4 py-4 text-base font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
+        className="mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"
       />
     </label>
   );
@@ -885,13 +885,13 @@ function CustomerPhoto({ customer }: { customer: Customer }) {
       <img
         src={customer.customer_photo}
         alt={customer.full_name}
-        className="h-14 w-14 rounded-2xl border border-[#eee9df] object-cover"
+        className="h-16 w-16 rounded-2xl border border-[#eee9df] object-cover"
       />
     );
   }
 
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#d4af37]/15 text-xl font-black text-[#b98320]">
+    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#d4af37]/15 text-xl font-black text-[#b98320]">
       {customer.full_name ? customer.full_name.charAt(0).toUpperCase() : "?"}
     </div>
   );
