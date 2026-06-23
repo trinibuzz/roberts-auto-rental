@@ -1,24 +1,8 @@
-
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const token =
-      cookies().get("roberts_token")?.value ||
-      cookies().get("robers_token")?.value ||
-      cookies().get("admin_token")?.value ||
-      cookies().get("token")?.value;
-
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json(
-        { success: false, message: "Not authorized." },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
 
     const {
@@ -43,7 +27,11 @@ export async function POST(request: Request) {
 
     if (!customer_id || !vehicle_id || !pickup_date || !return_date) {
       return NextResponse.json(
-        { success: false, message: "Customer, vehicle, pickup and return dates are required." },
+        {
+          success: false,
+          message:
+            "Customer, vehicle, pickup and return dates are required.",
+        },
         { status: 400 }
       );
     }
