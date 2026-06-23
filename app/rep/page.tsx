@@ -23,6 +23,7 @@ type BookingRow = {
 
 export default async function RepDashboardPage() {
   const token =
+    cookies().get("roberts_rep_token")?.value ||
     cookies().get("roberts_token")?.value ||
     cookies().get("robers_token")?.value ||
     cookies().get("admin_token")?.value ||
@@ -148,6 +149,7 @@ export default async function RepDashboardPage() {
               value={String(todayPickups)}
               note="Today"
               tone="gold"
+              href="/rep/pickups"
             />
 
             <QuickStat
@@ -155,6 +157,7 @@ export default async function RepDashboardPage() {
               value={String(todayReturns)}
               note="Today"
               tone="black"
+              href="/rep/returns"
             />
 
             <QuickStat
@@ -162,6 +165,7 @@ export default async function RepDashboardPage() {
               value={String(availableVehicles)}
               note="Vehicles"
               tone="green"
+              href="/rep/vehicles"
             />
 
             <QuickStat
@@ -169,6 +173,7 @@ export default async function RepDashboardPage() {
               value={String(rentedVehicles)}
               note="Vehicles"
               tone="blue"
+              href="/rep/vehicles"
             />
           </section>
 
@@ -224,7 +229,11 @@ export default async function RepDashboardPage() {
             ) : (
               <div className="divide-y divide-[#eee9df]">
                 {recentBookings.map((booking) => (
-                  <div key={booking.id} className="p-5">
+                  <Link
+                    key={booking.id}
+                    href={`/rep/workflow/${booking.id}`}
+                    className="block p-5 transition hover:bg-[#fbfaf8] active:scale-[0.99]"
+                  >
                     <div className="flex gap-4">
                       <VehicleThumb booking={booking} />
 
@@ -255,7 +264,7 @@ export default async function RepDashboardPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -281,11 +290,13 @@ function QuickStat({
   value,
   note,
   tone,
+  href,
 }: {
   title: string;
   value: string;
   note: string;
   tone: "gold" | "black" | "green" | "blue";
+  href: string;
 }) {
   const styles = {
     gold: "bg-[#fff9e8] text-[#b98320]",
@@ -295,8 +306,9 @@ function QuickStat({
   };
 
   return (
-    <div
-      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 ${styles[tone]}`}
+    <Link
+      href={href}
+      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 transition hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98] ${styles[tone]}`}
     >
       <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">
         {title}
@@ -305,7 +317,7 @@ function QuickStat({
       <p className="mt-3 text-4xl font-black">{value}</p>
 
       <p className="mt-1 text-xs font-bold opacity-75">{note}</p>
-    </div>
+    </Link>
   );
 }
 
