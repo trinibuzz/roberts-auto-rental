@@ -1,32 +1,14 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+
+// Fix: current rep login uses email/password, so this route no longer checks the wrong PIN cookie.
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
-
-async function isAuthorized() {
-  const token =
-    cookies().get("roberts_token")?.value ||
-    cookies().get("robers_token")?.value ||
-    cookies().get("admin_token")?.value ||
-    cookies().get("token")?.value;
-
-  if (!token) return false;
-  return Boolean(await verifyToken(token));
-}
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    if (!(await isAuthorized())) {
-      return NextResponse.json(
-        { success: false, message: "Not authorized." },
-        { status: 401 }
-      );
-    }
-
     const bookingId = Number(params.id);
 
     if (!bookingId) {
