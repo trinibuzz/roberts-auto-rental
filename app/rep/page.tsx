@@ -178,7 +178,7 @@ export default async function RepDashboardPage() {
               note="Start a booking with customer, vehicle, dates, and deposit."
               href="/rep/bookings/new"
               icon="+"
-              primary
+              tone="gold"
             />
 
             <ActionCard
@@ -186,6 +186,7 @@ export default async function RepDashboardPage() {
               note="See vehicles going out today."
               href="/rep/pickups"
               icon="↗"
+              tone="black"
             />
 
             <ActionCard
@@ -193,6 +194,7 @@ export default async function RepDashboardPage() {
               note="Close returns, mileage, fuel, photos, and balance."
               href="/rep/returns"
               icon="↙"
+              tone="blue"
             />
 
             <ActionCard
@@ -200,6 +202,7 @@ export default async function RepDashboardPage() {
               note="Tap to view ready vehicles with photos."
               href="/rep/vehicles"
               icon="🚗"
+              tone="green"
             />
           </section>
 
@@ -236,14 +239,19 @@ export default async function RepDashboardPage() {
 
                         <p className="mt-1 text-sm font-semibold text-[#7a7168]">
                           {booking.vehicle_name || "Vehicle not set"}{" "}
-                          {booking.plate_number ? `• ${booking.plate_number}` : ""}
+                          {booking.plate_number
+                            ? `• ${booking.plate_number}`
+                            : ""}
                         </p>
 
                         <div className="mt-3 grid gap-2 text-xs font-bold text-[#5f554c] sm:grid-cols-2">
                           <p>Pickup: {formatDate(booking.pickup_date)}</p>
                           <p>Return: {formatDate(booking.return_date)}</p>
                           <p>Phone: {booking.phone || "-"}</p>
-                          <p>Booking: {booking.booking_number || `#${booking.id}`}</p>
+                          <p>
+                            Booking:{" "}
+                            {booking.booking_number || `#${booking.id}`}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -255,11 +263,12 @@ export default async function RepDashboardPage() {
         </div>
 
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#e7e2d9] bg-white/95 px-4 py-3 shadow-2xl backdrop-blur">
-          <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2">
+          <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2">
             <BottomNavLink href="/rep" label="Home" icon="⌂" active />
             <BottomNavLink href="/rep/bookings/new" label="Book" icon="+" />
             <BottomNavLink href="/rep/pickups" label="Pickups" icon="↗" />
             <BottomNavLink href="/rep/returns" label="Returns" icon="↙" />
+            <BottomNavLink href="/rep/vehicles" label="Cars" icon="🚗" />
           </div>
         </nav>
       </section>
@@ -286,7 +295,9 @@ function QuickStat({
   };
 
   return (
-    <div className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 ${styles[tone]}`}>
+    <div
+      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 ${styles[tone]}`}
+    >
       <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">
         {title}
       </p>
@@ -303,40 +314,53 @@ function ActionCard({
   note,
   href,
   icon,
-  primary = false,
+  tone,
 }: {
   title: string;
   note: string;
   href: string;
   icon: string;
-  primary?: boolean;
+  tone: "gold" | "black" | "green" | "blue";
 }) {
+  const styles = {
+    gold: {
+      card: "bg-gradient-to-r from-[#d4af37] to-[#b98320] text-white",
+      icon: "bg-white/20 text-white",
+      note: "text-white/85",
+    },
+    black: {
+      card: "bg-[#111111] text-white",
+      icon: "bg-white/15 text-white",
+      note: "text-white/75",
+    },
+    green: {
+      card: "bg-green-700 text-white",
+      icon: "bg-white/15 text-white",
+      note: "text-white/80",
+    },
+    blue: {
+      card: "bg-blue-700 text-white",
+      icon: "bg-white/15 text-white",
+      note: "text-white/80",
+    },
+  };
+
+  const selected = styles[tone];
+
   return (
     <Link
       href={href}
-      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/5 transition active:scale-[0.98] ${
-        primary
-          ? "bg-gradient-to-r from-[#d4af37] to-[#b98320] text-white"
-          : "border border-[#e7e2d9] bg-white text-[#1d1d1f]"
-      }`}
+      className={`rounded-[1.8rem] p-5 shadow-xl shadow-black/10 transition hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98] ${selected.card}`}
     >
       <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black ${
-          primary ? "bg-white/20" : "bg-[#d4af37]/15 text-[#b98320]"
-        }`}
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black ${selected.icon}`}
       >
         {icon}
       </div>
 
       <h3 className="mt-5 text-xl font-black">{title}</h3>
 
-      <p
-        className={`mt-2 text-sm leading-6 ${
-          primary ? "text-white/85" : "text-[#7a7168]"
-        }`}
-      >
-        {note}
-      </p>
+      <p className={`mt-2 text-sm leading-6 ${selected.note}`}>{note}</p>
     </Link>
   );
 }
@@ -398,11 +422,11 @@ function BottomNavLink({
   return (
     <Link
       href={href}
-      className={`rounded-2xl px-3 py-2 text-center text-xs font-black ${
+      className={`rounded-2xl px-2 py-2 text-center text-[11px] font-black ${
         active ? "bg-[#111111] text-white" : "text-[#6b6257]"
       }`}
     >
-      <span className="block text-lg leading-none">{icon}</span>
+      <span className="block text-base leading-none">{icon}</span>
       <span className="mt-1 block">{label}</span>
     </Link>
   );
