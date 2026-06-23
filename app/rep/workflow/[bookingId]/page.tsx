@@ -54,6 +54,7 @@ function createPool() {
 
 async function getRepUser() {
   const cookieStore = cookies();
+
   const token =
     cookieStore.get("roberts_rep_token")?.value ||
     cookieStore.get("roberts_token")?.value ||
@@ -199,7 +200,10 @@ export default async function RepWorkflowPage({
           </div>
 
           <div className="grid gap-3 p-5 sm:grid-cols-2">
-            <InfoBox title="Customer" lines={[booking.customer_name, booking.phone]} />
+            <InfoBox
+              title="Customer"
+              lines={[booking.customer_name, booking.phone]}
+            />
 
             <InfoBox
               title="Vehicle"
@@ -219,8 +223,8 @@ export default async function RepWorkflowPage({
             text="The booking has been created and is ready for processing."
             status="Completed"
             completed
-            href={`/admin/bookings/${booking.id}`}
-            buttonText="View Booking"
+            href={`/rep/workflow/${booking.id}`}
+            buttonText="View Summary"
             tone="green"
           />
 
@@ -230,7 +234,7 @@ export default async function RepWorkflowPage({
             text="Collect deposit, rental payment, balance, or payment reference."
             status={paymentDone ? "Completed" : "Pending"}
             completed={paymentDone}
-            href={`/rep/payments/${booking.id}`}
+            href={`/rep/mobile/payments/${booking.id}`}
             buttonText={paymentDone ? "View / Add Payment" : "Record Payment"}
             tone="gold"
           />
@@ -241,7 +245,7 @@ export default async function RepWorkflowPage({
             text="Record mileage, fuel level, damages, checkout/return condition, and upload photo/video evidence."
             status={inspectionDone || evidenceDone ? "In Progress" : "Pending"}
             completed={inspectionDone && evidenceDone}
-            href={`/rep/inspections/${booking.id}`}
+            href={`/rep/mobile/inspections/${booking.id}`}
             buttonText={
               inspectionDone || evidenceDone
                 ? "Continue Inspection"
@@ -256,7 +260,7 @@ export default async function RepWorkflowPage({
             text="Let the customer sign the rental agreement directly on the tablet."
             status={signatureDone ? "Completed" : "Pending"}
             completed={signatureDone}
-            href={`/rep/signatures/${booking.id}`}
+            href={`/rep/mobile/signatures/${booking.id}`}
             buttonText={
               signatureDone ? "View / Add Signature" : "Capture Signature"
             }
