@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { isAuthorized } from "@/lib/requireAuth";
 
 export async function GET() {
   try {
+    const authorized = await isAuthorized();
+
+    if (!authorized) {
+      return NextResponse.json(
+        { success: false, message: "Not authorized." },
+        { status: 401 }
+      );
+    }
+
     const [rows] = await db.query(`
       SELECT 
         bookings.*,
@@ -31,6 +41,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const authorized = await isAuthorized();
+
+    if (!authorized) {
+      return NextResponse.json(
+        { success: false, message: "Not authorized." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     const customer_id = Number(body.customer_id);
@@ -100,8 +119,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "This vehicle cannot be booked because it is not available.",
+          message: "This vehicle cannot be booked because it is not available.",
         },
         { status: 400 }
       );
@@ -141,8 +159,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "This vehicle is not available for the selected dates.",
+          message: "This vehicle is not available for the selected dates.",
           existing_booking: overlaps[0],
         },
         { status: 400 }
