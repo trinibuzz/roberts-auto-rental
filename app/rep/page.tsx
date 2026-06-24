@@ -151,106 +151,92 @@ export default async function RepDashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
-      <div className="mx-auto min-h-screen max-w-5xl bg-[radial-gradient(circle_at_90%_0%,rgba(212,175,55,0.18),transparent_30%),linear-gradient(180deg,#111111_0%,#050505_42%,#030303_100%)] pb-28">
-        <header className="sticky top-0 z-40 border-b border-[#d4af37]/15 bg-[#050505]/92 px-4 py-3 backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-3">
-            <Link href="/rep" className="flex min-w-0 items-center gap-3">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-[#d4af37]/30 bg-white shadow-lg shadow-black/40">
-                <img
-                  src="/images/logo-car.jpg"
-                  alt="Roberts Auto Rental"
-                  className="h-full w-full object-cover object-left"
-                />
-              </div>
+      <div className="mx-auto min-h-screen max-w-5xl bg-[#030303] pb-28">
+        <section className="relative min-h-[590px] overflow-hidden border-b border-[#d4af37]/20 bg-black">
+          <img
+            src="/images/logo-car.jpg"
+            alt="Roberts Auto Rental and Leasing"
+            className="absolute inset-0 h-full w-full object-cover object-top"
+          />
 
-              <div className="min-w-0">
-                <p className="font-serif text-xl font-black leading-[1.05] text-white">
-                  Roberts Auto Rental
+          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/68 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-[#030303]/55 to-transparent" />
+
+          <div className="relative flex min-h-[590px] flex-col justify-between px-4 pb-6 pt-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="max-w-[250px] rounded-3xl border border-[#d4af37]/25 bg-black/45 px-4 py-3 backdrop-blur-md">
+                <p className="font-serif text-3xl font-black leading-[0.95] text-white">
+                  Roberts Auto
+                  <br />
+                  Rental
                 </p>
 
-                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37]">
+                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#d4af37]">
                   Rep Mobile App
                 </p>
               </div>
-            </Link>
 
-            <Link
-              href="/rep/vehicles"
-              className="rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-xs font-black text-[#d4af37] shadow-lg shadow-black/30"
-            >
-              Fleet
-            </Link>
-          </div>
-        </header>
+              <Link
+                href="/rep/vehicles"
+                className="rounded-full border border-[#d4af37]/35 bg-black/50 px-5 py-3 text-xs font-black text-[#d4af37] shadow-lg shadow-black/30 backdrop-blur-md"
+              >
+                Fleet
+              </Link>
+            </div>
 
-        <section className="px-4 py-5">
-          <div className="overflow-hidden rounded-[2rem] border border-[#d4af37]/25 bg-[#080808] shadow-2xl shadow-black/50">
-            <div className="relative min-h-[430px]">
-              <img
-                src="/images/logo-car.jpg"
-                alt="Roberts Auto Rental and Leasing"
-                className="absolute inset-0 h-full w-full object-cover object-center"
-              />
+            <div>
+              <div className="inline-flex rounded-full border border-[#d4af37]/35 bg-black/55 px-4 py-2 text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37] backdrop-blur">
+                Fast Rental Workflow
+              </div>
 
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/15" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-[#030303]/40 to-transparent" />
+              <h1 className="mt-5 max-w-[430px] font-serif text-5xl font-black leading-[0.94] text-white md:text-6xl">
+                Pickup
+                <br />
+                Return
+                <br />
+                Rent Faster
+              </h1>
 
-              <div className="relative flex min-h-[430px] flex-col justify-between p-5 md:p-8">
-                <div>
-                  <div className="inline-flex rounded-full border border-[#d4af37]/35 bg-black/55 px-4 py-2 text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37] backdrop-blur">
-                    Roberts Auto Rental
-                  </div>
+              <p className="mt-4 max-w-[390px] text-sm font-semibold leading-7 text-white/72">
+                Customer checkout, vehicle release, payment, inspection, and
+                signature in one rep app.
+              </p>
 
-                  <h1 className="mt-5 max-w-[420px] font-serif text-4xl font-black leading-[0.98] text-white md:text-6xl">
-                    Fast Pickup
-                    <br />
-                    & Return
-                  </h1>
+              <div className="mt-5 grid grid-cols-5 gap-2 rounded-2xl border border-[#d4af37]/25 bg-black/58 p-3 backdrop-blur-md">
+                <FlowStep number="1" label="Customer" active />
+                <FlowStep number="2" label="Vehicle" />
+                <FlowStep number="3" label="Payment" />
+                <FlowStep number="4" label="Checkout" />
+                <FlowStep number="5" label="Sign" />
+              </div>
 
-                  <p className="mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/72">
-                    A premium rep app for customer checkout, vehicle release,
-                    payments, inspections, and signatures.
-                  </p>
-                </div>
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:max-w-xl sm:grid-cols-3">
+                <Link
+                  href="/rep/pickups"
+                  className="rounded-2xl bg-[#d4af37] px-4 py-4 text-center text-sm font-black text-[#070707] shadow-xl shadow-black/40"
+                >
+                  Start Pickup
+                </Link>
 
-                <div>
-                  <div className="mb-4 grid grid-cols-5 gap-2 rounded-2xl border border-[#d4af37]/25 bg-black/55 p-3 backdrop-blur">
-                    <FlowStep number="1" label="Customer" active />
-                    <FlowStep number="2" label="Vehicle" />
-                    <FlowStep number="3" label="Payment" />
-                    <FlowStep number="4" label="Checkout" />
-                    <FlowStep number="5" label="Sign" />
-                  </div>
+                <Link
+                  href="/rep/returns"
+                  className="rounded-2xl border border-white/10 bg-white/12 px-4 py-4 text-center text-sm font-black text-white backdrop-blur"
+                >
+                  Process Return
+                </Link>
 
-                  <div className="grid grid-cols-2 gap-3 sm:max-w-xl sm:grid-cols-3">
-                    <Link
-                      href="/rep/pickups"
-                      className="rounded-2xl bg-[#d4af37] px-4 py-4 text-center text-sm font-black text-[#070707] shadow-xl shadow-black/40"
-                    >
-                      Start Pickup
-                    </Link>
-
-                    <Link
-                      href="/rep/returns"
-                      className="rounded-2xl border border-white/10 bg-white/12 px-4 py-4 text-center text-sm font-black text-white backdrop-blur"
-                    >
-                      Process Return
-                    </Link>
-
-                    <Link
-                      href="/rep/vehicles"
-                      className="col-span-2 rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-4 text-center text-sm font-black text-[#d4af37] sm:col-span-1"
-                    >
-                      View Fleet
-                    </Link>
-                  </div>
-                </div>
+                <Link
+                  href="/rep/vehicles"
+                  className="col-span-2 rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-4 text-center text-sm font-black text-[#d4af37] sm:col-span-1"
+                >
+                  View Fleet
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-4 gap-2 px-4">
+        <section className="grid grid-cols-4 gap-2 px-4 py-5">
           <MiniStat
             title="Pickups"
             value={String(todayPickups)}
@@ -280,7 +266,7 @@ export default async function RepDashboardPage() {
           />
         </section>
 
-        <section className="grid gap-3 px-4 py-5 md:grid-cols-3">
+        <section className="grid gap-3 px-4 md:grid-cols-3">
           <MobileAction
             title="Customer Pickup"
             text="Begin the five-step pickup process for today's rentals."
