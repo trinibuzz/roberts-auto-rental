@@ -94,41 +94,35 @@ export default async function RepBookingHomePage() {
   return (
     <main className="min-h-screen bg-[#060606] text-white">
       <div className="mx-auto min-h-screen max-w-5xl overflow-hidden bg-[#090909] pb-28">
-        <section className="relative min-h-[760px] overflow-hidden">
+        <section className="relative min-h-[730px] overflow-hidden">
           <img
             src="/images/rep-booking-hero.svg"
             alt="Premium rental vehicles"
             className="absolute inset-0 h-full w-full object-cover"
           />
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-[#090909]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/8 to-[#090909]" />
 
           <div className="relative px-4 pb-6 pt-5">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d4af37]/25 bg-black/35 text-3xl leading-none text-[#d4af37] backdrop-blur"
-                aria-label="Menu"
-              >
-                ≡
-              </button>
+            <button
+              type="button"
+              className="absolute left-5 top-5 z-10 text-4xl leading-none text-[#d4af37]"
+              aria-label="Menu"
+            >
+              ≡
+            </button>
 
-              <span className="rounded-full border border-[#d4af37]/30 bg-black/35 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37] backdrop-blur">
-                Rep Booking
-              </span>
-            </div>
-
-            <div className="mt-2 flex justify-center">
+            <div className="flex justify-center pt-2">
               <img
                 src="/images/roberts-logo-wide.jpg"
                 alt="Roberts Auto Rental and Leasing"
-                className="h-auto w-full max-w-[440px] object-contain drop-shadow-2xl"
+                className="h-auto w-full max-w-[420px] object-contain drop-shadow-2xl"
               />
             </div>
 
             <div className="mt-5 text-center">
-              <h1 className="text-4xl font-black uppercase tracking-[0.18em] text-white md:text-6xl">
-                Drive In <span className="text-[#d4af37]">Style</span>
+              <h1 className="text-4xl font-light uppercase tracking-[0.24em] text-white md:text-6xl">
+                Drive In <span className="font-semibold text-[#d4af37]">Style</span>
               </h1>
 
               <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/72">
@@ -136,19 +130,11 @@ export default async function RepBookingHomePage() {
               </p>
             </div>
 
-            <div className="mt-[230px] rounded-[1.75rem] border border-[#d4af37]/35 bg-[#101010]/90 p-4 shadow-2xl shadow-black/50 backdrop-blur-md md:mt-[260px]">
-              <div className="grid grid-cols-2 border-b border-[#d4af37]/25">
-                <div className="border-b-2 border-[#d4af37] px-3 pb-3 text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#d4af37]">
-                    ▣ Book A Vehicle
-                  </p>
-                </div>
-
-                <div className="px-3 pb-3 text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
-                    ● Manage Booking
-                  </p>
-                </div>
+            <div className="mt-[230px] rounded-[1.75rem] border border-[#d4af37]/35 bg-[#101010]/88 p-4 shadow-2xl shadow-black/50 backdrop-blur-md md:mt-[260px]">
+              <div className="border-b border-[#d4af37]/25 pb-3 text-center">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#d4af37]">
+                  ▣ Book A Vehicle
+                </p>
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -168,18 +154,6 @@ export default async function RepBookingHomePage() {
           </div>
         </section>
 
-        <section className="px-4">
-          <SectionHeader title="Explore Services" href="/rep/vehicles" />
-
-          <div className="grid grid-cols-5 gap-3 overflow-x-auto pb-2">
-            <ServiceCard icon="◇" title="Premium Fleet" />
-            <ServiceCard icon="□" title="Trusted Service" />
-            <ServiceCard icon="◷" title="Flexible Options" />
-            <ServiceCard icon="♕" title="Exclusive Benefits" />
-            <ServiceCard icon="⚿" title="Long Term Leasing" />
-          </div>
-        </section>
-
         <section className="mt-7 px-4">
           <SectionHeader title="Featured Vehicles" href="/rep/vehicles" />
 
@@ -195,15 +169,6 @@ export default async function RepBookingHomePage() {
           </div>
         </section>
 
-        <section className="mx-4 mt-7 rounded-[1.5rem] border border-[#d4af37]/25 bg-[#101010] p-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <MiniInfo icon="☏" title="24/7 Support" text="We're here for every rental." />
-            <MiniInfo icon="□" title="Trusted Service" text="Reliable and professional." />
-            <MiniInfo icon="◷" title="Flexible Options" text="Daily and weekly rentals." />
-            <MiniInfo icon="▣" title="Secure Booking" text="Fast and safe checkout." />
-          </div>
-        </section>
-
         <section className="mt-7 grid grid-cols-3 gap-3 px-4">
           <QuickStat title="Book" value={String(todayBookings)} href="/rep/pickups" />
           <QuickStat title="Return" value={String(todayReturns)} href="/rep/returns" />
@@ -216,13 +181,27 @@ export default async function RepBookingHomePage() {
   );
 }
 
-function BookingField({ label, value, icon }: { label: string; value: string; icon: string }) {
+function BookingField({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: string;
+}) {
   return (
     <div>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/58">{label}</p>
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/58">
+        {label}
+      </p>
 
       <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.08] px-4 py-4 text-sm font-semibold text-white/75">
-        <span className="flex items-center gap-3"><span className="text-lg text-[#d4af37]">{icon}</span>{value}</span>
+        <span className="flex items-center gap-3">
+          <span className="text-lg text-[#d4af37]">{icon}</span>
+          {value}
+        </span>
+
         <span className="text-white/45">⌄</span>
       </div>
     </div>
@@ -232,33 +211,49 @@ function BookingField({ label, value, icon }: { label: string; value: string; ic
 function SectionHeader({ title, href }: { title: string; href: string }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <h2 className="text-lg font-black uppercase tracking-[0.12em] text-white">{title}</h2>
-      <Link href={href} className="text-sm font-black text-[#d4af37]">View All →</Link>
+      <h2 className="text-lg font-black uppercase tracking-[0.12em] text-white">
+        {title}
+      </h2>
+
+      <Link href={href} className="text-sm font-black text-[#d4af37]">
+        View All →
+      </Link>
     </div>
   );
 }
 
-function ServiceCard({ icon, title }: { icon: string; title: string }) {
-  return (
-    <div className="min-w-[120px] rounded-2xl border border-[#d4af37]/25 bg-[#111111] p-4 text-center shadow-xl shadow-black/25">
-      <div className="text-4xl text-[#d4af37]">{icon}</div>
-      <p className="mt-3 text-sm font-semibold leading-tight text-white/78">{title}</p>
-    </div>
-  );
-}
+function FeaturedVehicle({
+  vehicle,
+  fallbackTitle,
+  fallbackRate,
+}: {
+  vehicle: VehicleRow | null;
+  fallbackTitle: string;
+  fallbackRate: string;
+}) {
+  const title =
+    vehicle?.vehicle_name ||
+    [vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(" ") ||
+    fallbackTitle;
 
-function FeaturedVehicle({ vehicle, fallbackTitle, fallbackRate }: { vehicle: VehicleRow | null; fallbackTitle: string; fallbackRate: string }) {
-  const title = vehicle?.vehicle_name || [vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(" ") || fallbackTitle;
   const rate = vehicle?.daily_rate ? `${formatMoney(vehicle.daily_rate)}` : fallbackRate;
 
   return (
-    <Link href="/rep/vehicles" className="overflow-hidden rounded-2xl border border-[#d4af37]/25 bg-[#111111] shadow-xl shadow-black/30">
+    <Link
+      href="/rep/vehicles"
+      className="overflow-hidden rounded-2xl border border-[#d4af37]/25 bg-[#111111] shadow-xl shadow-black/30"
+    >
       <div className="relative h-36 overflow-hidden bg-black">
         {vehicle?.vehicle_photo ? (
           <img src={vehicle.vehicle_photo} alt={title} className="h-full w-full object-cover" />
         ) : (
-          <img src="/images/rep-booking-hero.svg" alt={title} className="h-full w-full object-cover object-bottom" />
+          <img
+            src="/images/rep-booking-hero.svg"
+            alt={title}
+            className="h-full w-full object-cover object-bottom"
+          />
         )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <span className="absolute right-4 top-3 text-2xl text-[#d4af37]">♡</span>
       </div>
@@ -270,7 +265,9 @@ function FeaturedVehicle({ vehicle, fallbackTitle, fallbackRate }: { vehicle: Ve
         </div>
 
         <div className="text-right">
-          <p className="text-lg font-black text-[#d4af37]">{rate} <span className="text-xs text-white/55">/day</span></p>
+          <p className="text-lg font-black text-[#d4af37]">
+            {rate} <span className="text-xs text-white/55">/day</span>
+          </p>
           <p className="text-xs text-white/45">Automatic</p>
         </div>
       </div>
@@ -278,22 +275,24 @@ function FeaturedVehicle({ vehicle, fallbackTitle, fallbackRate }: { vehicle: Ve
   );
 }
 
-function MiniInfo({ icon, title, text }: { icon: string; title: string; text: string }) {
+function QuickStat({
+  title,
+  value,
+  href,
+}: {
+  title: string;
+  value: string;
+  href: string;
+}) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="text-3xl text-[#d4af37]">{icon}</span>
-      <div>
-        <p className="text-xs font-black uppercase tracking-[0.1em] text-white">{title}</p>
-        <p className="mt-1 text-xs leading-5 text-white/55">{text}</p>
-      </div>
-    </div>
-  );
-}
+    <Link
+      href={href}
+      className="rounded-2xl border border-[#d4af37]/25 bg-[#111111] p-4 text-center"
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#d4af37]">
+        {title}
+      </p>
 
-function QuickStat({ title, value, href }: { title: string; value: string; href: string }) {
-  return (
-    <Link href={href} className="rounded-2xl border border-[#d4af37]/25 bg-[#111111] p-4 text-center">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#d4af37]">{title}</p>
       <p className="mt-2 text-3xl font-black text-white">{value}</p>
     </Link>
   );
@@ -312,11 +311,30 @@ function BottomNav() {
   );
 }
 
-function BottomLink({ href, label, icon, active = false }: { href: string; label: string; icon: string; active?: boolean }) {
+function BottomLink({
+  href,
+  label,
+  icon,
+  active = false,
+}: {
+  href: string;
+  label: string;
+  icon: string;
+  active?: boolean;
+}) {
   return (
-    <Link href={href} className={active ? "rounded-2xl bg-[#d4af37] px-3 py-2 text-center text-[#070707]" : "rounded-2xl px-3 py-2 text-center text-white/55"}>
+    <Link
+      href={href}
+      className={
+        active
+          ? "rounded-2xl bg-[#d4af37] px-3 py-2 text-center text-[#070707]"
+          : "rounded-2xl px-3 py-2 text-center text-white/55"
+      }
+    >
       <p className="text-lg leading-none">{icon}</p>
-      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em]">{label}</p>
+      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em]">
+        {label}
+      </p>
     </Link>
   );
 }
