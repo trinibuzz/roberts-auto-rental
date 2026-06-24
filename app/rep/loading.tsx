@@ -15,7 +15,7 @@ export default function LoadingRepApp() {
         <div className="mx-auto mt-8 h-16 w-16 animate-spin rounded-full border-4 border-white/10 border-t-[#d4af37]" />
 
         <p className="mt-7 text-sm font-semibold leading-6 text-white/55">
-          Preparing customer, vehicle, payment, checkout, and signature.
+          Loading premium vehicle booking.
         </p>
       </div>
     </main>
