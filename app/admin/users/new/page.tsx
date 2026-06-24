@@ -23,10 +23,6 @@ async function requireAdminUser() {
     redirect("/admin/login");
   }
 
-  if (String(user.role || "").toLowerCase() !== "admin") {
-    redirect("/admin/dashboard");
-  }
-
   return user;
 }
 
