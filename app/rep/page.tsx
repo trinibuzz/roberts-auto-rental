@@ -150,12 +150,12 @@ export default async function RepDashboardPage() {
   const returnList = returnRows as BookingRow[];
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
-      <div className="mx-auto min-h-screen max-w-6xl bg-[radial-gradient(circle_at_90%_5%,rgba(212,175,55,0.20),transparent_30%),linear-gradient(180deg,#121212_0%,#050505_38%,#0b0b0c_100%)]">
-        <header className="sticky top-0 z-40 border-b border-[#d4af37]/20 bg-[#050505]/90 px-4 py-4 backdrop-blur-xl">
+    <main className="min-h-screen bg-[#030303] text-white">
+      <div className="mx-auto min-h-screen max-w-5xl bg-[radial-gradient(circle_at_90%_0%,rgba(212,175,55,0.22),transparent_30%),linear-gradient(180deg,#111111_0%,#050505_42%,#030303_100%)] pb-28">
+        <header className="sticky top-0 z-40 border-b border-[#d4af37]/15 bg-[#050505]/90 px-4 py-4 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-3">
-            <Link href="/rep" className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d4af37]/30 bg-white p-2 shadow-lg shadow-black/30">
+            <Link href="/rep" className="flex min-w-0 items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl border border-[#d4af37]/30 bg-white p-2 shadow-lg shadow-black/40">
                 <img
                   src="/images/roberts-logo.png"
                   alt="Roberts Auto Rental"
@@ -163,110 +163,76 @@ export default async function RepDashboardPage() {
                 />
               </div>
 
-              <div>
-                <p className="font-serif text-lg font-black leading-tight text-white">
-                  Roberts Auto Rental
+              <div className="min-w-0">
+                <p className="font-serif text-2xl font-black leading-[1.05] text-white">
+                  Roberts Auto
+                  <br />
+                  Rental
                 </p>
 
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">
-                  Tablet Rental App
+                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.28em] text-[#d4af37]">
+                  Rep Mobile App
                 </p>
               </div>
             </Link>
 
-            <div className="flex gap-2">
-              <Link
-                href="/rep/vehicles"
-                className="rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-3 text-[11px] font-black text-[#d4af37]"
-              >
-                Vehicles
-              </Link>
-
-              <Link
-                href="/admin/dashboard"
-                className="rounded-full bg-[#d4af37] px-4 py-3 text-[11px] font-black text-[#070707]"
-              >
-                Office
-              </Link>
-            </div>
+            <Link
+              href="/rep/vehicles"
+              className="rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-xs font-black text-[#d4af37] shadow-lg shadow-black/30"
+            >
+              Fleet
+            </Link>
           </div>
         </header>
 
         <section className="px-4 py-5">
-          <div className="overflow-hidden rounded-[2rem] border border-[#d4af37]/25 bg-[#080808] shadow-2xl shadow-black/40">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(212,175,55,0.28),transparent_35%),linear-gradient(135deg,#050505_0%,#111111_58%,#3a250d_100%)]" />
-              <div className="relative p-5 md:p-7">
-                <div className="inline-flex rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37]">
-                  Fast Rental Workflow
+          <div className="overflow-hidden rounded-[2rem] border border-[#d4af37]/25 bg-[#080808] shadow-2xl shadow-black/50">
+            <div className="relative min-h-[390px]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(212,175,55,0.30),transparent_34%),linear-gradient(135deg,#030303_0%,#101010_56%,#3b250d_100%)]" />
+
+              <img
+                src="/images/roberts-rep-hero-car.svg"
+                alt="Roberts Auto Rental fleet"
+                className="absolute bottom-0 right-[-42px] w-[108%] max-w-none opacity-95 md:right-[-20px] md:w-[82%]"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-[#030303]/60 to-transparent" />
+
+              <div className="relative flex min-h-[390px] flex-col justify-between p-5 md:p-7">
+                <div>
+                  <div className="inline-flex rounded-full border border-[#d4af37]/30 bg-black/45 px-4 py-2 text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37] backdrop-blur">
+                    Car Rental Rep App
+                  </div>
+
+                  <h1 className="mt-5 max-w-[430px] font-serif text-4xl font-black leading-[0.98] text-white md:text-6xl">
+                    Fast Pickup
+                    <br />
+                    & Return
+                  </h1>
+
+                  <p className="mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/70">
+                    Customer. Vehicle. Payment. Checkout. Signature.
+                  </p>
                 </div>
 
-                <h1 className="mt-5 font-serif text-4xl font-black leading-tight text-white md:text-5xl">
-                  5 Step Easy Booking
-                </h1>
-
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/65">
-                  Built for tablet and phone use. Start with the customer,
-                  confirm the vehicle, collect payment, complete checkout, and
-                  capture signature.
-                </p>
-
-                <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-                  <StepCard
-                    number="01"
-                    title="Customer"
-                    text="Select booking"
-                    href="/rep/pickups"
-                    active
-                  />
-
-                  <StepCard
-                    number="02"
-                    title="Vehicle"
-                    text="Check status"
-                    href="/rep/vehicles"
-                  />
-
-                  <StepCard
-                    number="03"
-                    title="Payment"
-                    text="Collect balance"
-                    href="/rep/pickups"
-                  />
-
-                  <StepCard
-                    number="04"
-                    title="Checkout"
-                    text="Inspect & release"
-                    href="/rep/pickups"
-                  />
-
-                  <StepCard
-                    number="05"
-                    title="Signature"
-                    text="Customer signs"
-                    href="/rep/pickups"
-                  />
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:max-w-xl sm:grid-cols-3">
                   <Link
                     href="/rep/pickups"
-                    className="rounded-2xl bg-[#d4af37] px-5 py-4 text-center text-sm font-black text-[#070707] shadow-lg shadow-black/30"
+                    className="rounded-2xl bg-[#d4af37] px-4 py-4 text-center text-sm font-black text-[#070707] shadow-xl shadow-black/40"
                   >
-                    Start Fast Booking
+                    Start Pickup
                   </Link>
 
                   <Link
                     href="/rep/returns"
-                    className="rounded-2xl border border-white/10 bg-white/10 px-5 py-4 text-center text-sm font-black text-white backdrop-blur"
+                    className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 text-center text-sm font-black text-white backdrop-blur"
                   >
                     Process Return
                   </Link>
 
                   <Link
                     href="/rep/vehicles"
-                    className="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-4 text-center text-sm font-black text-[#d4af37]"
+                    className="col-span-2 rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-4 text-center text-sm font-black text-[#d4af37] sm:col-span-1"
                   >
                     View Fleet
                   </Link>
@@ -276,7 +242,39 @@ export default async function RepDashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4">
+        <section className="px-4">
+          <div className="rounded-[2rem] border border-[#d4af37]/20 bg-[#0d0d0e] p-4 shadow-xl shadow-black/30">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#d4af37]">
+                  Quick Booking
+                </p>
+
+                <h2 className="mt-1 font-serif text-2xl font-black text-white">
+                  5 Step Rental Flow
+                </h2>
+              </div>
+
+              <span className="rounded-full border border-[#d4af37]/25 bg-[#d4af37]/10 px-3 py-2 text-[10px] font-black text-[#d4af37]">
+                REP
+              </span>
+            </div>
+
+            <div className="grid grid-cols-5 gap-2">
+              <FlowStep number="1" label="Customer" active />
+              <FlowStep number="2" label="Vehicle" />
+              <FlowStep number="3" label="Payment" />
+              <FlowStep number="4" label="Checkout" />
+              <FlowStep number="5" label="Sign" />
+            </div>
+
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-[20%] rounded-full bg-[#d4af37]" />
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-4 gap-2 px-4 py-5">
           <MiniStat
             title="Pickups"
             value={String(todayPickups)}
@@ -292,44 +290,44 @@ export default async function RepDashboardPage() {
           />
 
           <MiniStat
-            title="Available"
+            title="Cars"
             value={String(availableVehicles)}
             href="/rep/vehicles"
             tone="green"
           />
 
           <MiniStat
-            title="Reserved"
+            title="Out"
             value={String(reservedVehicles)}
             href="/rep/vehicles"
             tone="blue"
           />
         </section>
 
-        <section className="grid gap-4 px-4 py-5 lg:grid-cols-3">
+        <section className="grid gap-3 px-4 md:grid-cols-3">
           <MobileAction
             title="Customer Pickup"
-            text="Open today's pickups and continue through customer, vehicle, payment, checkout, and signature."
+            text="Begin the five-step pickup process for today's rentals."
             href="/rep/pickups"
             button="Open Pickups"
           />
 
           <MobileAction
             title="Vehicle Return"
-            text="Process returns, verify condition, and prepare the vehicle for the next rental."
+            text="Inspect and receive returning vehicles quickly."
             href="/rep/returns"
             button="Open Returns"
           />
 
           <MobileAction
-            title="Fleet View"
-            text="View vehicle availability and current vehicle status in the mobile portal."
+            title="Rental Fleet"
+            text="View vehicle availability and status from the tablet."
             href="/rep/vehicles"
-            button="Open Vehicles"
+            button="View Fleet"
           />
         </section>
 
-        <section className="grid gap-4 px-4 pb-8 lg:grid-cols-2">
+        <section className="grid gap-4 px-4 py-5 lg:grid-cols-2">
           <SchedulePanel
             title="Today Pickups"
             bookings={pickupList}
@@ -344,55 +342,44 @@ export default async function RepDashboardPage() {
             mode="return"
           />
         </section>
+
+        <BottomNav />
       </div>
     </main>
   );
 }
 
-function StepCard({
+function FlowStep({
   number,
-  title,
-  text,
-  href,
+  label,
   active = false,
 }: {
   number: string;
-  title: string;
-  text: string;
-  href: string;
+  label: string;
   active?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className={
-        active
-          ? "rounded-2xl border border-[#d4af37] bg-[#d4af37] p-3 text-[#070707] shadow-lg shadow-black/30"
-          : "rounded-2xl border border-[#d4af37]/20 bg-black/35 p-3 text-white shadow-lg shadow-black/20 backdrop-blur transition hover:border-[#d4af37]/50"
-      }
-    >
-      <p
+    <div className="text-center">
+      <div
         className={
           active
-            ? "text-[10px] font-black uppercase tracking-[0.2em] text-[#070707]/70"
-            : "text-[10px] font-black uppercase tracking-[0.2em] text-[#d4af37]"
+            ? "mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d4af37] text-sm font-black text-[#070707]"
+            : "mx-auto flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d4af37]/25 bg-black/30 text-sm font-black text-[#d4af37]"
         }
       >
-        Step {number}
-      </p>
-
-      <p className="mt-2 text-lg font-black leading-tight">{title}</p>
+        {number}
+      </div>
 
       <p
         className={
           active
-            ? "mt-1 text-[11px] font-bold text-[#070707]/70"
-            : "mt-1 text-[11px] font-bold text-white/55"
+            ? "mt-2 text-[10px] font-black uppercase tracking-[0.06em] text-[#d4af37]"
+            : "mt-2 text-[10px] font-black uppercase tracking-[0.06em] text-white/55"
         }
       >
-        {text}
+        {label}
       </p>
-    </Link>
+    </div>
   );
 }
 
@@ -417,13 +404,13 @@ function MiniStat({
   return (
     <Link
       href={href}
-      className={`rounded-2xl border p-4 shadow-xl shadow-black/25 ${styles[tone]}`}
+      className={`rounded-2xl border p-3 text-center shadow-xl shadow-black/25 ${styles[tone]}`}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-75">
+      <p className="text-[9px] font-black uppercase tracking-[0.16em] opacity-75">
         {title}
       </p>
 
-      <p className="mt-2 text-4xl font-black">{value}</p>
+      <p className="mt-1 text-3xl font-black">{value}</p>
     </Link>
   );
 }
@@ -440,16 +427,16 @@ function MobileAction({
   button: string;
 }) {
   return (
-    <div className="rounded-[1.75rem] border border-[#d4af37]/20 bg-[#0f0f10] p-5 shadow-xl shadow-black/30">
-      <h2 className="font-serif text-2xl font-black text-white">{title}</h2>
+    <div className="rounded-[1.5rem] border border-[#d4af37]/20 bg-[#0f0f10] p-4 shadow-xl shadow-black/30">
+      <h2 className="font-serif text-xl font-black text-white">{title}</h2>
 
-      <p className="mt-3 min-h-[70px] text-sm font-semibold leading-6 text-white/60">
+      <p className="mt-2 min-h-[48px] text-xs font-semibold leading-5 text-white/60">
         {text}
       </p>
 
       <Link
         href={href}
-        className="mt-4 block rounded-2xl bg-[#d4af37] px-5 py-4 text-center text-sm font-black text-[#070707]"
+        className="mt-4 block rounded-2xl bg-[#d4af37] px-4 py-3 text-center text-xs font-black text-[#070707]"
       >
         {button}
       </Link>
@@ -469,7 +456,7 @@ function SchedulePanel({
   mode: "pickup" | "return";
 }) {
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-[#d4af37]/20 bg-[#0f0f10] shadow-xl shadow-black/30">
+    <section className="overflow-hidden rounded-[1.5rem] border border-[#d4af37]/20 bg-[#0f0f10] shadow-xl shadow-black/30">
       <div className="flex items-center justify-between border-b border-[#d4af37]/10 px-5 py-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d4af37]">
@@ -517,7 +504,7 @@ function SchedulePanel({
 
               <div className="mt-4 grid grid-cols-5 gap-1">
                 <TinyProgress label="C" active />
-                <TinyProgress label="V" active />
+                <TinyProgress label="V" />
                 <TinyProgress label="P" />
                 <TinyProgress label="O" />
                 <TinyProgress label="S" />
@@ -547,6 +534,47 @@ function TinyProgress({
     >
       {label}
     </div>
+  );
+}
+
+function BottomNav() {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#d4af37]/20 bg-[#050505]/95 px-3 py-3 backdrop-blur-xl">
+      <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2">
+        <BottomLink href="/rep" label="Home" icon="⌂" active />
+        <BottomLink href="/rep/pickups" label="Pickups" icon="↗" />
+        <BottomLink href="/rep/returns" label="Returns" icon="↙" />
+        <BottomLink href="/rep/vehicles" label="Fleet" icon="▣" />
+      </div>
+    </nav>
+  );
+}
+
+function BottomLink({
+  href,
+  label,
+  icon,
+  active = false,
+}: {
+  href: string;
+  label: string;
+  icon: string;
+  active?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={
+        active
+          ? "rounded-2xl bg-[#d4af37] px-3 py-2 text-center text-[#070707]"
+          : "rounded-2xl px-3 py-2 text-center text-white/60"
+      }
+    >
+      <p className="text-lg leading-none">{icon}</p>
+      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em]">
+        {label}
+      </p>
+    </Link>
   );
 }
 
