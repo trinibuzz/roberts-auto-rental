@@ -25,6 +25,23 @@ type BookingRequestRow = {
   created_at: string | Date | null;
 };
 
+type VehicleRow = {
+  id: number;
+  vehicle_name: string | null;
+  plate_number: string | null;
+  daily_rate: string | number | null;
+  deposit_amount: string | number | null;
+  status: string | null;
+};
+
+type CustomerRow = {
+  id: number;
+};
+
+type InsertResult = {
+  insertId: number;
+};
+
 async function requireOfficeUser() {
   const token =
     cookies().get("roberts_token")?.value ||
@@ -77,6 +94,239 @@ async function updateRequestStatus(formData: FormData) {
   redirect("/admin/booking-requests?updated=1");
 }
 
+async function convertRequestToBooking(formData: FormData) {
+  "use server";
+
+  await requireOfficeUser();
+
+  const requestId = Number(formData.get("request_id"));
+
+  if (!requestId) {
+    redirect("/admin/booking-requests?error=invalid");
+  }
+
+  const [requestRows] = await db.query(
+    `
+      SELECT
+        id,
+        request_number,
+        vehicle_id,
+        vehicle_name,
+        full_name,
+        email,
+        phone,
+        pickup_date,
+        pickup_time,
+        return_date,
+        return_time,
+        notes,
+        status,
+        created_at
+      FROM public_booking_requests
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [requestId]
+  );
+
+  const requests = requestRows as BookingRequestRow[];
+  const request = requests[0];
+
+  if (!request) {
+    redirect("/admin/booking-requests?error=notfound");
+  }
+
+  if (!request.vehicle_id) {
+    redirect("/admin/booking-requests?error=missing_vehicle");
+  }
+
+  if (String(request.status || "").toLowerCase() === "converted") {
+    redirect("/admin/booking-requests?error=already_converted");
+  }
+
+  const [vehicleRows] = await db.query(
+    `
+      SELECT
+        id,
+        vehicle_name,
+        plate_number,
+        daily_rate,
+        deposit_amount,
+        status
+      FROM vehicles
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [request.vehicle_id]
+  );
+
+  const vehicles = vehicleRows as VehicleRow[];
+  const vehicle = vehicles[0];
+
+  if (!vehicle) {
+    redirect("/admin/booking-requests?error=vehicle_not_found");
+  }
+
+  let customerId = await findExistingCustomer(request.email, request.phone);
+
+  if (!customerId) {
+    const [customerInsertResult] = await db.query(
+      `
+        INSERT INTO customers (
+          full_name,
+          phone,
+          email
+        )
+        VALUES (?, ?, ?)
+      `,
+      [
+        request.full_name,
+        request.phone,
+        request.email || null,
+      ]
+    );
+
+    customerId = Number((customerInsertResult as InsertResult).insertId || 0);
+  }
+
+  if (!customerId) {
+    redirect("/admin/booking-requests?error=customer_failed");
+  }
+
+  const days = calculateRentalDays(request.pickup_date, request.return_date);
+  const dailyRate = Number(vehicle.daily_rate || 0);
+  const deposit = Number(vehicle.deposit_amount || 0);
+  const totalAmount = days * dailyRate;
+  const amountPaid = 0;
+  const balance = totalAmount - amountPaid;
+  const bookingNumber = createBookingNumber();
+
+  const bookingNotes = [
+    `Converted from website request ${request.request_number}.`,
+    request.notes ? `Customer notes: ${request.notes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const [bookingInsertResult] = await db.query(
+    `
+      INSERT INTO bookings (
+        booking_number,
+        customer_id,
+        vehicle_id,
+        pickup_date,
+        pickup_time,
+        return_date,
+        return_time,
+        daily_rate,
+        number_of_days,
+        deposit,
+        discount,
+        extra_charges,
+        total_amount,
+        amount_paid,
+        balance,
+        status,
+        notes
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, 'confirmed', ?)
+    `,
+    [
+      bookingNumber,
+      customerId,
+      request.vehicle_id,
+      request.pickup_date,
+      request.pickup_time || null,
+      request.return_date,
+      request.return_time || null,
+      dailyRate,
+      days,
+      deposit,
+      totalAmount,
+      amountPaid,
+      balance,
+      bookingNotes,
+    ]
+  );
+
+  const bookingId = Number((bookingInsertResult as InsertResult).insertId || 0);
+
+  if (!bookingId) {
+    redirect("/admin/booking-requests?error=booking_failed");
+  }
+
+  await db.query(
+    `
+      UPDATE public_booking_requests
+      SET status = 'converted'
+      WHERE id = ?
+    `,
+    [requestId]
+  );
+
+  await db.query(
+    `
+      UPDATE vehicles
+      SET status = 'reserved'
+      WHERE id = ?
+      AND LOWER(status) = 'available'
+    `,
+    [request.vehicle_id]
+  );
+
+  redirect(`/admin/bookings/${bookingId}`);
+}
+
+async function findExistingCustomer(email: string | null, phone: string) {
+  if (email) {
+    const [emailRows] = await db.query(
+      `
+        SELECT id
+        FROM customers
+        WHERE LOWER(email) = ?
+        LIMIT 1
+      `,
+      [email.toLowerCase()]
+    );
+
+    const emailCustomers = emailRows as CustomerRow[];
+
+    if (emailCustomers[0]?.id) {
+      return Number(emailCustomers[0].id);
+    }
+  }
+
+  const [phoneRows] = await db.query(
+    `
+      SELECT id
+      FROM customers
+      WHERE phone = ?
+      LIMIT 1
+    `,
+    [phone]
+  );
+
+  const phoneCustomers = phoneRows as CustomerRow[];
+
+  return Number(phoneCustomers[0]?.id || 0);
+}
+
+function createBookingNumber() {
+  const stamp = Date.now().toString().slice(-8);
+  const random = Math.floor(Math.random() * 900 + 100);
+
+  return `RB-${stamp}-${random}`;
+}
+
+function calculateRentalDays(pickupDate: string | Date, returnDate: string | Date) {
+  const pickup = new Date(pickupDate);
+  const returned = new Date(returnDate);
+  const diff = returned.getTime() - pickup.getTime();
+  const calculatedDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+  return calculatedDays > 0 ? calculatedDays : 1;
+}
+
 function formatDate(value: string | Date | null) {
   if (!value) return "-";
 
@@ -99,6 +349,21 @@ function formatTime(value?: string | null) {
   const displayHour = hourNumber % 12 || 12;
 
   return `${displayHour}:${minutes} ${suffix}`;
+}
+
+function getErrorMessage(error: string) {
+  const messages: Record<string, string> = {
+    invalid: "Something went wrong. Please try again.",
+    notfound: "That request was not found.",
+    missing_vehicle:
+      "This request has no selected vehicle. Open Create Booking and enter it manually.",
+    already_converted: "This request was already converted.",
+    vehicle_not_found: "The selected vehicle was not found.",
+    customer_failed: "The customer could not be created.",
+    booking_failed: "The booking could not be created.",
+  };
+
+  return messages[error] || "Something went wrong. Please try again.";
 }
 
 export default async function AdminBookingRequestsPage({
@@ -153,6 +418,10 @@ export default async function AdminBookingRequestsPage({
     (request) => String(request.status || "").toLowerCase() === "approved"
   ).length;
 
+  const convertedCount = requests.filter(
+    (request) => String(request.status || "").toLowerCase() === "converted"
+  ).length;
+
   const updated = searchParams?.updated === "1";
   const error = searchParams?.error || "";
 
@@ -176,8 +445,8 @@ export default async function AdminBookingRequestsPage({
                 </h1>
 
                 <p className="mt-2 text-sm text-[#6b6257]">
-                  Review public customer requests from the website and update
-                  their status.
+                  Review public customer requests and convert approved requests
+                  into real rental bookings.
                 </p>
               </div>
 
@@ -209,15 +478,16 @@ export default async function AdminBookingRequestsPage({
 
             {error ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
-                Something went wrong. Please try again.
+                {getErrorMessage(error)}
               </div>
             ) : null}
 
-            <section className="grid gap-4 md:grid-cols-4">
+            <section className="grid gap-4 md:grid-cols-5">
               <StatCard title="Total Requests" value={String(requests.length)} />
               <StatCard title="Pending" value={String(pendingCount)} />
               <StatCard title="Contacted" value={String(contactedCount)} />
               <StatCard title="Approved" value={String(approvedCount)} />
+              <StatCard title="Converted" value={String(convertedCount)} />
             </section>
 
             <section className="overflow-hidden rounded-3xl border border-[#e7e2d9] bg-white shadow-xl shadow-black/5">
@@ -227,8 +497,8 @@ export default async function AdminBookingRequestsPage({
                 </h2>
 
                 <p className="mt-1 text-sm text-[#7a7168]">
-                  Requests are not confirmed bookings until the office creates
-                  or approves the rental.
+                  Use Convert To Booking after the office confirms the customer,
+                  date, vehicle, and deposit details.
                 </p>
               </div>
 
@@ -249,177 +519,185 @@ export default async function AdminBookingRequestsPage({
                 </div>
               ) : (
                 <div className="divide-y divide-[#eee9df]">
-                  {requests.map((request) => (
-                    <article
-                      key={request.id}
-                      className="grid gap-5 px-6 py-6 xl:grid-cols-[1.1fr_1fr_1fr_0.8fr_1fr]"
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-xl font-black text-[#1d1d1f]">
-                            {request.full_name}
-                          </h3>
+                  {requests.map((request) => {
+                    const isConverted =
+                      String(request.status || "").toLowerCase() === "converted";
 
-                          <StatusBadge status={request.status} />
-                        </div>
+                    return (
+                      <article
+                        key={request.id}
+                        className="grid gap-5 px-6 py-6 xl:grid-cols-[1.1fr_1fr_1fr_0.8fr_1fr]"
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-xl font-black text-[#1d1d1f]">
+                              {request.full_name}
+                            </h3>
 
-                        <p className="mt-1 text-sm font-bold text-[#7a7168]">
-                          {request.request_number}
-                        </p>
+                            <StatusBadge status={request.status} />
+                          </div>
 
-                        <p className="mt-4 text-sm font-semibold text-[#5f554c]">
-                          Phone:{" "}
-                          <a
-                            href={`tel:${request.phone}`}
-                            className="font-black text-[#1d1d1f]"
-                          >
-                            {request.phone}
-                          </a>
-                        </p>
+                          <p className="mt-1 text-sm font-bold text-[#7a7168]">
+                            {request.request_number}
+                          </p>
 
-                        <p className="mt-1 text-sm font-semibold text-[#5f554c]">
-                          Email:{" "}
-                          {request.email ? (
+                          <p className="mt-4 text-sm font-semibold text-[#5f554c]">
+                            Phone:{" "}
                             <a
-                              href={`mailto:${request.email}`}
+                              href={`tel:${request.phone}`}
                               className="font-black text-[#1d1d1f]"
                             >
-                              {request.email}
+                              {request.phone}
                             </a>
-                          ) : (
-                            "-"
-                          )}
-                        </p>
-                      </div>
+                          </p>
 
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
-                          Vehicle
-                        </p>
+                          <p className="mt-1 text-sm font-semibold text-[#5f554c]">
+                            Email:{" "}
+                            {request.email ? (
+                              <a
+                                href={`mailto:${request.email}`}
+                                className="font-black text-[#1d1d1f]"
+                              >
+                                {request.email}
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </p>
+                        </div>
 
-                        <p className="mt-2 text-base font-black text-[#1d1d1f]">
-                          {request.vehicle_name || "Office to recommend"}
-                        </p>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
+                            Vehicle
+                          </p>
 
-                        <p className="mt-1 text-sm font-semibold text-[#7a7168]">
-                          Vehicle ID: {request.vehicle_id || "-"}
-                        </p>
-                      </div>
+                          <p className="mt-2 text-base font-black text-[#1d1d1f]">
+                            {request.vehicle_name || "Office to recommend"}
+                          </p>
 
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
-                          Rental Dates
-                        </p>
+                          <p className="mt-1 text-sm font-semibold text-[#7a7168]">
+                            Vehicle ID: {request.vehicle_id || "-"}
+                          </p>
+                        </div>
 
-                        <p className="mt-2 text-sm font-black text-[#1d1d1f]">
-                          Pickup: {formatDate(request.pickup_date)}
-                        </p>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
+                            Rental Dates
+                          </p>
 
-                        <p className="mt-1 text-sm font-semibold text-[#7a7168]">
-                          {formatTime(request.pickup_time)}
-                        </p>
+                          <p className="mt-2 text-sm font-black text-[#1d1d1f]">
+                            Pickup: {formatDate(request.pickup_date)}
+                          </p>
 
-                        <p className="mt-3 text-sm font-black text-[#1d1d1f]">
-                          Return: {formatDate(request.return_date)}
-                        </p>
+                          <p className="mt-1 text-sm font-semibold text-[#7a7168]">
+                            {formatTime(request.pickup_time)}
+                          </p>
 
-                        <p className="mt-1 text-sm font-semibold text-[#7a7168]">
-                          {formatTime(request.return_time)}
-                        </p>
-                      </div>
+                          <p className="mt-3 text-sm font-black text-[#1d1d1f]">
+                            Return: {formatDate(request.return_date)}
+                          </p>
 
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
-                          Submitted
-                        </p>
+                          <p className="mt-1 text-sm font-semibold text-[#7a7168]">
+                            {formatTime(request.return_time)}
+                          </p>
+                        </div>
 
-                        <p className="mt-2 text-sm font-black text-[#1d1d1f]">
-                          {formatDate(request.created_at)}
-                        </p>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
+                            Submitted
+                          </p>
 
-                        <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
-                          Notes
-                        </p>
+                          <p className="mt-2 text-sm font-black text-[#1d1d1f]">
+                            {formatDate(request.created_at)}
+                          </p>
 
-                        <p className="mt-2 line-clamp-5 text-sm font-semibold leading-6 text-[#7a7168]">
-                          {request.notes || "No notes added."}
-                        </p>
-                      </div>
+                          <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-[#b98320]">
+                            Notes
+                          </p>
 
-                      <div className="space-y-2">
-                        <form action={updateRequestStatus}>
-                          <input
-                            type="hidden"
-                            name="request_id"
-                            value={request.id}
-                          />
-                          <input type="hidden" name="status" value="contacted" />
+                          <p className="mt-2 text-sm font-semibold leading-6 text-[#7a7168]">
+                            {request.notes || "No notes added."}
+                          </p>
+                        </div>
 
-                          <button
-                            type="submit"
-                            className="w-full rounded-xl border border-[#e7e2d9] bg-white px-4 py-3 text-sm font-black text-[#4b443d] shadow-sm"
+                        <div className="space-y-2">
+                          <form action={convertRequestToBooking}>
+                            <input
+                              type="hidden"
+                              name="request_id"
+                              value={request.id}
+                            />
+
+                            <button
+                              type="submit"
+                              disabled={isConverted}
+                              className="w-full rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-4 py-3 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isConverted ? "Already Converted" : "Convert To Booking"}
+                            </button>
+                          </form>
+
+                          <form action={updateRequestStatus}>
+                            <input
+                              type="hidden"
+                              name="request_id"
+                              value={request.id}
+                            />
+                            <input type="hidden" name="status" value="contacted" />
+
+                            <button
+                              type="submit"
+                              disabled={isConverted}
+                              className="w-full rounded-xl border border-[#e7e2d9] bg-white px-4 py-3 text-sm font-black text-[#4b443d] shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Mark Contacted
+                            </button>
+                          </form>
+
+                          <form action={updateRequestStatus}>
+                            <input
+                              type="hidden"
+                              name="request_id"
+                              value={request.id}
+                            />
+                            <input type="hidden" name="status" value="approved" />
+
+                            <button
+                              type="submit"
+                              disabled={isConverted}
+                              className="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Approve Request
+                            </button>
+                          </form>
+
+                          <Link
+                            href="/admin/bookings/new"
+                            className="block rounded-xl bg-[#0b0b0c] px-4 py-3 text-center text-sm font-black text-white shadow-sm"
                           >
-                            Mark Contacted
-                          </button>
-                        </form>
+                            Create Manually
+                          </Link>
 
-                        <form action={updateRequestStatus}>
-                          <input
-                            type="hidden"
-                            name="request_id"
-                            value={request.id}
-                          />
-                          <input type="hidden" name="status" value="approved" />
+                          <form action={updateRequestStatus}>
+                            <input
+                              type="hidden"
+                              name="request_id"
+                              value={request.id}
+                            />
+                            <input type="hidden" name="status" value="rejected" />
 
-                          <button
-                            type="submit"
-                            className="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-sm"
-                          >
-                            Approve Request
-                          </button>
-                        </form>
-
-                        <Link
-                          href="/admin/bookings/new"
-                          className="block rounded-xl bg-[#0b0b0c] px-4 py-3 text-center text-sm font-black text-white shadow-sm"
-                        >
-                          Create Booking
-                        </Link>
-
-                        <form action={updateRequestStatus}>
-                          <input
-                            type="hidden"
-                            name="request_id"
-                            value={request.id}
-                          />
-                          <input type="hidden" name="status" value="rejected" />
-
-                          <button
-                            type="submit"
-                            className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm"
-                          >
-                            Reject
-                          </button>
-                        </form>
-
-                        <form action={updateRequestStatus}>
-                          <input
-                            type="hidden"
-                            name="request_id"
-                            value={request.id}
-                          />
-                          <input type="hidden" name="status" value="pending" />
-
-                          <button
-                            type="submit"
-                            className="w-full rounded-xl border border-[#e7e2d9] bg-[#fbfaf8] px-4 py-3 text-sm font-black text-[#4b443d]"
-                          >
-                            Back To Pending
-                          </button>
-                        </form>
-                      </div>
-                    </article>
-                  ))}
+                            <button
+                              type="submit"
+                              disabled={isConverted}
+                              className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          </form>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </section>
