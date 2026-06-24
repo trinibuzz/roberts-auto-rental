@@ -7,6 +7,7 @@ export default function AdminSidebar({
   active:
     | "dashboard"
     | "bookings"
+    | "booking-requests"
     | "calendar"
     | "vehicles"
     | "customers"
@@ -47,6 +48,12 @@ export default function AdminSidebar({
             href="/admin/bookings"
             label="Bookings"
             active={active === "bookings"}
+          />
+
+          <SidebarLink
+            href="/admin/booking-requests"
+            label="Booking Requests"
+            active={active === "booking-requests"}
           />
 
           <SidebarLink
