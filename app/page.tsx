@@ -15,38 +15,65 @@ type VehicleRow = {
   vehicle_photo: string | null;
 };
 
+type CountRow = {
+  total: number;
+};
+
 function formatMoney(value: number | string | null) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
-export default async function PublicHomePage() {
-  const [rows] = await db.query(
-    `
-      SELECT
-        id,
-        vehicle_name,
-        make,
-        model,
-        year,
-        plate_number,
-        status,
-        daily_rate,
-        vehicle_photo
-      FROM vehicles
-      WHERE LOWER(status) = 'available'
-      ORDER BY vehicle_name ASC
-      LIMIT 3
-    `
-  );
+function getFirstTotal(rows: unknown) {
+  const data = rows as CountRow[];
+  return Number(data[0]?.total || 0);
+}
 
-  const featuredVehicles = rows as VehicleRow[];
+export default async function PublicHomePage() {
+  const [[vehicleRows], [availableRows], [requestRows]] = await Promise.all([
+    db.query(
+      `
+        SELECT
+          id,
+          vehicle_name,
+          make,
+          model,
+          year,
+          plate_number,
+          status,
+          daily_rate,
+          vehicle_photo
+        FROM vehicles
+        WHERE LOWER(status) = 'available'
+        ORDER BY vehicle_name ASC
+        LIMIT 6
+      `
+    ),
+    db.query(
+      `
+        SELECT COUNT(*) AS total
+        FROM vehicles
+        WHERE LOWER(status) = 'available'
+      `
+    ),
+    db.query(
+      `
+        SELECT COUNT(*) AS total
+        FROM public_booking_requests
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      `
+    ),
+  ]);
+
+  const featuredVehicles = vehicleRows as VehicleRow[];
+  const availableVehicles = getFirstTotal(availableRows);
+  const recentRequests = getFirstTotal(requestRows);
 
   return (
-    <main className="min-h-screen bg-[#f8f7f4] text-[#1d1d1f]">
-      <header className="sticky top-0 z-30 border-b border-[#e7e2d9] bg-white/95 px-5 py-4 shadow-sm backdrop-blur">
+    <main className="min-h-screen bg-[#f7f3ea] text-[#151515]">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-md ring-1 ring-[#e7e2d9]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-md ring-1 ring-black/10">
               <img
                 src="/images/roberts-logo.png"
                 alt="Roberts Auto Rental"
@@ -55,103 +82,110 @@ export default async function PublicHomePage() {
             </div>
 
             <div>
-              <p className="font-serif text-xl font-black">
+              <p className="font-serif text-xl font-black leading-tight">
                 Roberts Auto Rental
               </p>
 
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98320]">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
                 Drive With Confidence
               </p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-black text-[#4b443d] md:flex">
-            <Link href="/fleet" className="hover:text-[#b98320]">
+          <nav className="hidden items-center gap-7 text-sm font-black text-[#4b443d] md:flex">
+            <Link href="/fleet" className="transition hover:text-[#b98320]">
               Fleet
             </Link>
 
-            <Link href="/book" className="hover:text-[#b98320]">
+            <Link href="/book" className="transition hover:text-[#b98320]">
               Book Online
             </Link>
 
-            <Link href="/admin/login" className="hover:text-[#b98320]">
+            <Link href="/admin/login" className="transition hover:text-[#b98320]">
               Staff Login
             </Link>
           </nav>
 
           <Link
             href="/book"
-            className="rounded-full bg-[#111111] px-5 py-3 text-sm font-black text-white shadow-lg"
+            className="rounded-full bg-[#111111] px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5"
           >
             Book Now
           </Link>
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#080808]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(212,175,55,0.32),transparent_34%),linear-gradient(90deg,#050505_0%,#111111_48%,#3a2410_100%)]" />
-
+      <section className="relative overflow-hidden bg-[#070707]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(212,175,55,0.35),transparent_34%),linear-gradient(90deg,#030303_0%,#111111_48%,#4b2c0d_100%)]" />
         <div className="absolute inset-0 opacity-25">
           <div className="h-full w-full bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_35%,rgba(212,175,55,0.12)_100%)]" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[620px] max-w-7xl gap-10 px-5 py-16 md:grid-cols-[1.05fr_0.95fr] md:items-center md:py-24">
+        <div className="relative mx-auto grid min-h-[660px] max-w-7xl gap-10 px-5 py-16 md:grid-cols-[1.05fr_0.95fr] md:items-center md:py-24">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.32em] text-[#d4af37]">
+            <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-[#d4af37] backdrop-blur">
               Premium Rental Experience
-            </p>
+            </div>
 
-            <h1 className="mt-6 font-serif text-5xl font-black leading-tight text-white md:text-7xl">
-              Reliable Cars.
+            <h1 className="mt-7 font-serif text-5xl font-black leading-[0.95] text-white md:text-7xl">
+              Clean Cars.
               <br />
-              Smooth Booking.
+              Easy Booking.
               <br />
-              Better Service.
+              Trusted Service.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base font-semibold leading-8 text-white/75">
-              Book your rental online with Roberts Auto Rental. Choose your
-              dates, request your vehicle, and let our office confirm your
-              reservation.
+            <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-white/75">
+              Book your vehicle online with Roberts Auto Rental. Choose your
+              dates, request your vehicle, and let our office team confirm your
+              rental professionally.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/book"
-                className="rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-7 py-5 text-center text-sm font-black text-white shadow-xl"
+                className="rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-7 py-5 text-center text-sm font-black text-white shadow-xl transition hover:-translate-y-0.5"
               >
                 Start Booking Request
               </Link>
 
               <Link
                 href="/fleet"
-                className="rounded-2xl border border-white/20 bg-white/10 px-7 py-5 text-center text-sm font-black text-white backdrop-blur hover:bg-white/15"
+                className="rounded-2xl border border-white/20 bg-white/10 px-7 py-5 text-center text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
               >
-                View Available Fleet
+                View Fleet
               </Link>
+            </div>
+
+            <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
+              <HeroStat value={String(availableVehicles)} label="Available" />
+              <HeroStat value={String(recentRequests)} label="Requests" />
+              <HeroStat value="24/7" label="Online" />
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur">
-            <div className="rounded-[1.5rem] bg-white p-5">
+          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-4 shadow-2xl backdrop-blur">
+            <div className="rounded-[1.6rem] bg-white p-6">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
-                Online Booking
+                How it works
               </p>
 
               <h2 className="mt-3 font-serif text-4xl font-black text-[#111111]">
-                Request A Vehicle
+                Request today.
+                <br />
+                Confirm with office.
               </h2>
 
               <p className="mt-3 text-sm font-semibold leading-6 text-[#6b6257]">
-                Your request goes straight to the office as pending. A staff
-                member can confirm availability, documents, and deposit.
+                Public bookings are sent to the office as pending requests so
+                staff can confirm availability, deposits, and documents.
               </p>
 
               <div className="mt-6 grid gap-3">
-                <MiniStep number="01" title="Choose dates" />
-                <MiniStep number="02" title="Select vehicle" />
-                <MiniStep number="03" title="Send request" />
-                <MiniStep number="04" title="Office confirms" />
+                <MiniStep number="01" title="Choose your rental dates" />
+                <MiniStep number="02" title="Select an available vehicle" />
+                <MiniStep number="03" title="Submit your request" />
+                <MiniStep number="04" title="Office confirms your booking" />
               </div>
 
               <Link
@@ -173,21 +207,21 @@ export default async function PublicHomePage() {
             </p>
 
             <h2 className="mt-3 font-serif text-4xl font-black">
-              Ready for the road
+              Available for your next trip
             </h2>
           </div>
 
           <Link
             href="/fleet"
-            className="rounded-2xl border border-[#e7e2d9] bg-white px-6 py-4 text-center text-sm font-black shadow-sm"
+            className="rounded-2xl border border-black/10 bg-white px-6 py-4 text-center text-sm font-black shadow-sm"
           >
             View Full Fleet
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {featuredVehicles.length === 0 ? (
-            <div className="rounded-[2rem] border border-[#e7e2d9] bg-white p-8 text-center shadow-xl shadow-black/5 md:col-span-3">
+            <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-xl shadow-black/5 md:col-span-3">
               <h3 className="font-serif text-3xl font-black">
                 Fleet coming soon
               </h3>
@@ -200,13 +234,13 @@ export default async function PublicHomePage() {
             featuredVehicles.map((vehicle) => (
               <article
                 key={vehicle.id}
-                className="overflow-hidden rounded-[2rem] border border-[#e7e2d9] bg-white shadow-xl shadow-black/5"
+                className="group overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-xl shadow-black/5 transition hover:-translate-y-1 hover:shadow-2xl"
               >
                 {vehicle.vehicle_photo ? (
                   <img
                     src={vehicle.vehicle_photo}
                     alt={vehicle.vehicle_name || "Vehicle"}
-                    className="h-56 w-full object-cover"
+                    className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-56 items-center justify-center bg-[#111111] text-5xl">
@@ -244,11 +278,20 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      <section className="border-y border-[#e7e2d9] bg-white">
+      <section className="border-y border-black/10 bg-white">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 md:grid-cols-3">
-          <Feature title="Easy booking" text="Customers can send rental requests online anytime." />
-          <Feature title="Office approval" text="Bookings stay pending until your team confirms them." />
-          <Feature title="Professional flow" text="Office, rep tablet, and public booking all work together." />
+          <Feature
+            title="Fast Request"
+            text="Customers send booking requests online without waiting for office hours."
+          />
+          <Feature
+            title="Office Control"
+            text="Staff confirm every booking before it becomes a real rental."
+          />
+          <Feature
+            title="Professional System"
+            text="Customer, office, and rep workflow now work together cleanly."
+          />
         </div>
       </section>
 
@@ -261,6 +304,17 @@ export default async function PublicHomePage() {
         </p>
       </footer>
     </main>
+  );
+}
+
+function HeroStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur">
+      <p className="text-2xl font-black">{value}</p>
+      <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white/60">
+        {label}
+      </p>
+    </div>
   );
 }
 
@@ -278,7 +332,7 @@ function MiniStep({ number, title }: { number: string; title: string }) {
 
 function Feature({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-[#e7e2d9] bg-[#fbfaf8] p-6">
+    <div className="rounded-[2rem] border border-black/10 bg-[#fbfaf8] p-6 shadow-sm">
       <h3 className="font-serif text-2xl font-black">{title}</h3>
       <p className="mt-3 text-sm font-semibold leading-6 text-[#7a7168]">
         {text}
