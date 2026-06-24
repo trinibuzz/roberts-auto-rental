@@ -12,7 +12,8 @@ export default function AdminSidebar({
     | "customers"
     | "payments"
     | "maintenance"
-    | "reports";
+    | "reports"
+    | "users";
 }) {
   return (
     <aside className="hidden min-h-screen w-72 shrink-0 bg-[#0b0b0c] text-white print:hidden md:block">
@@ -76,6 +77,12 @@ export default function AdminSidebar({
             href="/admin/maintenance"
             label="Maintenance"
             active={active === "maintenance"}
+          />
+
+          <SidebarLink
+            href="/admin/users"
+            label="Employee Manager"
+            active={active === "users"}
           />
 
           <SidebarLink
