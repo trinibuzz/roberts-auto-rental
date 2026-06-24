@@ -4,6 +4,15 @@ import jwt from "jsonwebtoken";
 
 export const dynamic = "force-dynamic";
 
+type UserRow = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  status: string | null;
+};
+
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
 
@@ -26,6 +35,16 @@ function createPool() {
   });
 }
 
+function getRedirectForRole(role: string) {
+  const cleanRole = String(role || "").toLowerCase();
+
+  if (cleanRole === "rep") {
+    return "/rep";
+  }
+
+  return "/admin/dashboard";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -35,7 +54,10 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { message: "Email and password are required." },
+        {
+          success: false,
+          message: "Email and password are required.",
+        },
         { status: 400 }
       );
     }
@@ -44,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const [rows] = await pool.execute(
       `
-        SELECT id, name, email, password, role
+        SELECT id, name, email, password, role, status
         FROM users
         WHERE LOWER(email) = ?
         LIMIT 1
@@ -52,20 +74,28 @@ export async function POST(request: NextRequest) {
       [email]
     );
 
-    const users = rows as Array<{
-      id: number;
-      name: string;
-      email: string;
-      password: string;
-      role: string;
-    }>;
-
+    const users = rows as UserRow[];
     const user = users[0];
 
     if (!user) {
       return NextResponse.json(
-        { message: "Invalid email or password." },
+        {
+          success: false,
+          message: "Invalid email or password.",
+        },
         { status: 401 }
+      );
+    }
+
+    const status = String(user.status || "active").toLowerCase();
+
+    if (status !== "active") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This user account is disabled. Please contact the administrator.",
+        },
+        { status: 403 }
       );
     }
 
@@ -73,54 +103,63 @@ export async function POST(request: NextRequest) {
 
     if (savedPassword !== password) {
       return NextResponse.json(
-        { message: "Invalid email or password." },
+        {
+          success: false,
+          message: "Invalid email or password.",
+        },
         { status: 401 }
       );
     }
+
+    const cleanRole = String(user.role || "staff").toLowerCase();
 
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: cleanRole,
       },
       getJwtSecret(),
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
+    const redirectTo = getRedirectForRole(cleanRole);
+
     const response = NextResponse.json({
+      success: true,
       message: "Login successful.",
+      redirectTo,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: cleanRole,
       },
     });
 
-    response.cookies.set("robers_token", token, {
+    const cookieOptions = {
       httpOnly: true,
-      sameSite: "lax",
-      secure: true,
+      sameSite: "lax" as const,
+      secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 60 * 60 * 24,
-    });
+      maxAge: 60 * 60 * 24 * 7,
+    };
 
-    response.cookies.set("roberts_token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      path: "/",
-      maxAge: 60 * 60 * 24,
-    });
+    response.cookies.set("robers_token", token, cookieOptions);
+    response.cookies.set("roberts_token", token, cookieOptions);
+    response.cookies.set("admin_token", token, cookieOptions);
+    response.cookies.set("roberts_rep_token", token, cookieOptions);
 
     return response;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(
-      { message: "Something went wrong during login." },
+      {
+        success: false,
+        message: "Something went wrong during login.",
+      },
       { status: 500 }
     );
   }
