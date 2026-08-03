@@ -22,6 +22,10 @@ type BookingDetail = {
   balance: string;
   status: string;
   notes: string | null;
+  staff_notes?: string | null;
+  checkout_notes?: string | null;
+  spare_tyre_present?: string | null;
+  jack_present?: string | null;
 
   customer_name: string;
   phone: string;
@@ -49,6 +53,16 @@ type Payment = {
   payment_reference: string | null;
   created_at: string;
   notes: string | null;
+};
+
+type InspectionRecord = {
+  id: number;
+  spare_tyre_present?: string | null;
+  jack_present?: string | null;
+  staff_notes?: string | null;
+  notes?: string | null;
+  damage_notes?: string | null;
+  created_at?: string | null;
 };
 
 export default async function BookingDetailPage({
@@ -127,6 +141,31 @@ export default async function BookingDetailPage({
   );
 
   const payments = paymentRows as Payment[];
+
+  const [inspectionRows] = await db.query(
+    `
+    SELECT *
+    FROM vehicle_inspections
+    WHERE booking_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [bookingId]
+  );
+
+  const latestInspection =
+    (inspectionRows as InspectionRecord[])[0] || null;
+
+  const recordedPaymentTotal = payments.reduce(
+    (total, payment) => total + Number(payment.amount || 0),
+    0
+  );
+  const bookingAmountPaid = Number(booking.amount_paid || 0);
+  const paymentDifference = bookingAmountPaid - recordedPaymentTotal;
+  const hasPaymentMismatch = Math.abs(paymentDifference) > 0.009;
+
+  const safetyEquipment = getSafetyEquipment(booking, latestInspection);
+  const displayNotes = removeSafetyEquipmentBlock(booking.notes || "");
 
   const [mediaRows] = await db.query(
     `
@@ -325,6 +364,40 @@ export default async function BookingDetailPage({
               </div>
 
               <div className="mt-8 rounded-2xl border border-gray-200 p-6">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Safety Equipment Verification
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Items confirmed by the representative before the vehicle was released.
+                    </p>
+                  </div>
+
+                  {safetyEquipment.verifiedAt && (
+                    <p className="text-xs font-semibold text-gray-500">
+                      Checked {formatDate(safetyEquipment.verifiedAt)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <SafetyItem
+                    label="Spare Tyre"
+                    value={safetyEquipment.spareTyre}
+                  />
+                  <SafetyItem label="Jack" value={safetyEquipment.jack} />
+                </div>
+
+                {!safetyEquipment.hasVerification && (
+                  <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                    Safety-equipment verification has not yet been recorded for this booking.
+                    Complete the Rep Vehicle Check-Out to record the spare tyre and jack.
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-8 rounded-2xl border border-gray-200 p-6">
                 <h3 className="text-lg font-bold text-gray-900">
                   Inspection Video Evidence
                 </h3>
@@ -365,14 +438,62 @@ export default async function BookingDetailPage({
               </div>
 
               <div className="mt-8 rounded-2xl border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Payment History
-                </h3>
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Payment History
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Itemized payments, methods, references, and notes for this booking.
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/rep/payments/${booking.id}`}
+                    className="rounded-lg border border-[#d4af37] px-4 py-2 text-center text-sm font-bold text-[#07111f] print:hidden"
+                  >
+                    Review Payments
+                  </Link>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <PaymentSummary
+                    label="Booking Amount Paid"
+                    value={`$${bookingAmountPaid.toFixed(2)}`}
+                  />
+                  <PaymentSummary
+                    label="Recorded Payment Entries"
+                    value={`$${recordedPaymentTotal.toFixed(2)}`}
+                  />
+                  <PaymentSummary
+                    label="Current Balance"
+                    value={`$${Number(booking.balance || 0).toFixed(2)}`}
+                  />
+                </div>
+
+                {hasPaymentMismatch && (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                    The booking shows ${bookingAmountPaid.toFixed(2)} paid, but the
+                    payment-history entries total ${recordedPaymentTotal.toFixed(2)}.
+                    Review the payment record so the amount, method, and reference agree
+                    without entering the same payment twice.
+                  </div>
+                )}
 
                 {payments.length === 0 ? (
-                  <p className="mt-3 text-sm text-gray-500">
-                    No payments recorded for this booking yet.
-                  </p>
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                    <p className="text-sm font-semibold text-gray-700">
+                      {bookingAmountPaid > 0
+                        ? "The booking has an amount paid, but no itemized payment transaction was recorded."
+                        : "No payments have been recorded for this booking yet."}
+                    </p>
+                    {bookingAmountPaid > 0 && (
+                      <p className="mt-2 text-xs leading-5 text-gray-500">
+                        The payment method, reference, date, and notes will remain blank
+                        until the payment record is corrected or added.
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -396,7 +517,7 @@ export default async function BookingDetailPage({
                               ${Number(payment.amount || 0).toFixed(2)}
                             </td>
                             <td className="px-4 py-3 capitalize">
-                              {payment.payment_method.replaceAll("_", " ")}
+                              {formatPaymentMethod(payment.payment_method)}
                             </td>
                             <td className="px-4 py-3">
                               {payment.payment_reference || "-"}
@@ -412,10 +533,12 @@ export default async function BookingDetailPage({
                 )}
               </div>
 
-              {booking.notes && (
+              {displayNotes && (
                 <div className="mt-8 rounded-2xl border border-gray-200 p-6">
                   <h3 className="text-lg font-bold text-gray-900">Notes</h3>
-                  <p className="mt-3 text-sm text-gray-700">{booking.notes}</p>
+                  <p className="mt-3 whitespace-pre-line text-sm text-gray-700">
+                    {displayNotes}
+                  </p>
                 </div>
               )}
 
@@ -532,6 +655,123 @@ function Detail({
       </span>
     </div>
   );
+}
+
+function SafetyItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null;
+}) {
+  const normalizedValue = value || "Not recorded";
+  const isVerified = normalizedValue.toLowerCase() === "verified";
+  const isMissing = normalizedValue.toLowerCase() === "missing";
+
+  const tone = isVerified
+    ? "border-green-200 bg-green-50 text-green-800"
+    : isMissing
+    ? "border-red-200 bg-red-50 text-red-800"
+    : "border-gray-200 bg-gray-50 text-gray-700";
+
+  const icon = isVerified ? "✓" : isMissing ? "!" : "–";
+
+  return (
+    <div className={`rounded-xl border px-4 py-4 ${tone}`}>
+      <p className="text-xs font-black uppercase tracking-[0.14em]">{label}</p>
+      <p className="mt-2 text-base font-black">
+        <span className="mr-2">{icon}</span>
+        {normalizedValue}
+      </p>
+    </div>
+  );
+}
+
+function PaymentSummary({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.12em] text-gray-500">
+        {label}
+      </p>
+      <p className="mt-2 text-lg font-black text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function getSafetyEquipment(
+  booking: BookingDetail,
+  inspection: InspectionRecord | null
+) {
+  const noteText = [
+    booking.notes,
+    booking.staff_notes,
+    booking.checkout_notes,
+    inspection?.staff_notes,
+    inspection?.notes,
+    inspection?.damage_notes,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join("\n");
+
+  const spareTyreFromText = extractEquipmentValue(
+    noteText,
+    /spare\s+tyre(?:\s+in\s+vehicle)?\s*:\s*([^\n\r]+)/i
+  );
+  const jackFromText = extractEquipmentValue(
+    noteText,
+    /jack(?:\s+in\s+vehicle)?\s*:\s*([^\n\r]+)/i
+  );
+
+  const spareTyre = normalizeEquipmentValue(
+    booking.spare_tyre_present ||
+      inspection?.spare_tyre_present ||
+      spareTyreFromText
+  );
+  const jack = normalizeEquipmentValue(
+    booking.jack_present || inspection?.jack_present || jackFromText
+  );
+
+  return {
+    spareTyre,
+    jack,
+    hasVerification: Boolean(spareTyre || jack),
+    verifiedAt: inspection?.created_at || null,
+  };
+}
+
+function extractEquipmentValue(text: string, pattern: RegExp) {
+  const match = text.match(pattern);
+  return match?.[1]?.trim() || null;
+}
+
+function normalizeEquipmentValue(value: string | null | undefined) {
+  const normalized = String(value || "").trim();
+
+  if (!normalized) return null;
+  if (/^(yes|verified|present|true|1)$/i.test(normalized)) return "Verified";
+  if (/^(no|missing|absent|false|0)$/i.test(normalized)) return "Missing";
+
+  return normalized;
+}
+
+function removeSafetyEquipmentBlock(notes: string) {
+  return notes
+    .replace(
+      /(?:^|\n)\s*Safety equipment verification:\s*(?:\r?\n)?\s*Spare tyre(?: in vehicle)?:[^\n\r]*(?:\r?\n)?\s*Jack(?: in vehicle)?:[^\n\r]*/gi,
+      ""
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatPaymentMethod(method: string) {
+  return String(method || "-").replaceAll("_", " ");
 }
 
 function StatusBadge({ status }: { status: string }) {
