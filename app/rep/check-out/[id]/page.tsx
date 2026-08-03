@@ -49,6 +49,8 @@ export default function RepCheckoutPage() {
   const [form, setForm] = useState({
     checkout_mileage: "",
     fuel_level: "Full",
+    spare_tyre_present: "",
+    jack_present: "",
     damage_notes: "",
     staff_notes: "",
   });
@@ -230,6 +232,20 @@ export default function RepCheckoutPage() {
       return;
     }
 
+    if (form.spare_tyre_present !== "Yes") {
+      setError(
+        "Please verify that the spare tyre is in the vehicle before completing check-out."
+      );
+      return;
+    }
+
+    if (form.jack_present !== "Yes") {
+      setError(
+        "Please verify that the jack is in the vehicle before completing check-out."
+      );
+      return;
+    }
+
     if (media.length === 0) {
       setError("Take or upload at least one photo/video before check-out.");
       return;
@@ -238,11 +254,28 @@ export default function RepCheckoutPage() {
     setSaving(true);
 
     try {
+      const equipmentNotes = [
+        "Safety equipment verification:",
+        `Spare tyre in vehicle: ${form.spare_tyre_present}`,
+        `Jack in vehicle: ${form.jack_present}`,
+      ].join("\n");
+
+      const payload = {
+        checkout_mileage: form.checkout_mileage,
+        fuel_level: form.fuel_level,
+        damage_notes: form.damage_notes,
+        staff_notes: [form.staff_notes, equipmentNotes]
+          .filter((value) => String(value || "").trim())
+          .join("\n\n"),
+        spare_tyre_present: form.spare_tyre_present,
+        jack_present: form.jack_present,
+      };
+
       const response = await fetch(`/api/rep/bookings/${bookingId}/checkout`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -406,6 +439,37 @@ export default function RepCheckoutPage() {
             </section>
 
             <section className="rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
+                Required Check
+              </p>
+
+              <h3 className="mt-2 font-serif text-3xl font-black">
+                Spare Tyre & Jack Verification
+              </h3>
+
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#7a7168]">
+                The rep must confirm both items are inside the vehicle before
+                the check-out can be completed.
+              </p>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <VerificationSelect
+                  label="Spare tyre in vehicle?"
+                  value={form.spare_tyre_present}
+                  onChange={(value) =>
+                    updateField("spare_tyre_present", value)
+                  }
+                />
+
+                <VerificationSelect
+                  label="Jack in vehicle?"
+                  value={form.jack_present}
+                  onChange={(value) => updateField("jack_present", value)}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-[#e7e2d9] bg-white p-5 shadow-xl shadow-black/5">
               <h3 className="font-serif text-3xl font-black">
                 Photos / Videos
               </h3>
@@ -527,5 +591,37 @@ export default function RepCheckoutPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function VerificationSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-black text-[#4b443d]">{label}</span>
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={
+          value === "Yes"
+            ? "mt-2 w-full rounded-2xl border-2 border-green-300 bg-green-50 px-5 py-5 text-lg font-black text-green-800 outline-none focus:border-green-500"
+            : value === "No"
+            ? "mt-2 w-full rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-5 text-lg font-black text-red-800 outline-none focus:border-red-500"
+            : "mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37]"
+        }
+      >
+        <option value="">Select answer</option>
+        <option value="Yes">Yes - verified</option>
+        <option value="No">No - missing</option>
+      </select>
+    </label>
   );
 }
