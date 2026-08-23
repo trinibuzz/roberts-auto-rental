@@ -113,6 +113,29 @@ export default async function PublicHomePage() {
             Book Now
           </Link>
         </div>
+
+        <nav className="mx-auto mt-4 grid max-w-7xl grid-cols-3 gap-2 border-t border-[#d4af37]/20 pt-3 md:hidden">
+          <Link
+            href="/fleet"
+            className="flex min-h-11 items-center justify-center rounded-xl border border-black/10 bg-white px-2 text-center text-xs font-black text-[#4b443d] shadow-sm"
+          >
+            Fleet
+          </Link>
+
+          <Link
+            href="/book"
+            className="flex min-h-11 items-center justify-center rounded-xl bg-[#d4af37] px-2 text-center text-xs font-black text-black shadow-sm"
+          >
+            Book Online
+          </Link>
+
+          <Link
+            href="/admin/login"
+            className="flex min-h-11 items-center justify-center rounded-xl border border-black/10 bg-white px-2 text-center text-xs font-black text-[#4b443d] shadow-sm"
+          >
+            Staff Login
+          </Link>
+        </nav>
       </header>
 
       <section className="overflow-hidden bg-[#050505] text-white">
