@@ -1,4 +1,3 @@
-
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
@@ -26,6 +25,10 @@ type Vehicle = {
   deposit_amount: string | number | null;
   status: string;
   vehicle_photo?: string | null;
+  photo?: string | null;
+  photo_url?: string | null;
+  image?: string | null;
+  image_url?: string | null;
   make?: string | null;
   model?: string | null;
   year?: string | number | null;
@@ -92,6 +95,9 @@ export default function RepNewBookingPage() {
   const [photoError, setPhotoError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [cameraFacing, setCameraFacing] = useState<"user" | "environment">(
+    "user"
+  );
   const [overrideInput, setOverrideInput] = useState("");
   const [overrideAccepted, setOverrideAccepted] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -132,7 +138,20 @@ export default function RepNewBookingPage() {
         const vehicleData = await vehicleResponse.json();
 
         if (customerData.success) setCustomers(customerData.customers || []);
-        if (vehicleData.success) setVehicles(vehicleData.vehicles || []);
+        if (vehicleData.success) {
+          setVehicles(
+            (vehicleData.vehicles || []).map((vehicle: Vehicle) => ({
+              ...vehicle,
+              vehicle_photo:
+                vehicle.vehicle_photo ||
+                vehicle.photo ||
+                vehicle.photo_url ||
+                vehicle.image ||
+                vehicle.image_url ||
+                null,
+            }))
+          );
+        }
       } catch {
         setError("Unable to load customers and vehicles.");
       } finally {
@@ -269,7 +288,7 @@ export default function RepNewBookingPage() {
     event.target.value = "";
   }
 
-  async function openCamera() {
+  async function startCamera(facing: "user" | "environment") {
     setCameraError("");
     setPhotoError("");
 
@@ -279,10 +298,14 @@ export default function RepNewBookingPage() {
     }
 
     try {
-      stopCamera();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: facing },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -290,10 +313,27 @@ export default function RepNewBookingPage() {
       });
 
       streamRef.current = stream;
+      setCameraFacing(facing);
       setCameraOpen(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
     } catch {
-      setCameraError("Camera access was blocked. Allow camera permission and try again.");
+      setCameraError(
+        "Unable to open that camera. Check camera permission and try again."
+      );
     }
+  }
+
+  async function openCamera() {
+    await startCamera(cameraFacing);
+  }
+
+  async function switchCamera() {
+    const nextFacing = cameraFacing === "user" ? "environment" : "user";
+    await startCamera(nextFacing);
   }
 
   function stopCamera() {
@@ -623,9 +663,12 @@ export default function RepNewBookingPage() {
                       {cameraOpen && (
                         <div className="mt-4 overflow-hidden rounded-3xl border border-[#e7e2d9] bg-black">
                           <video ref={videoRef} autoPlay muted playsInline className="h-72 w-full object-cover" />
-                          <div className="grid gap-3 bg-white p-4 sm:grid-cols-2">
+                          <div className="grid gap-3 bg-white p-4 sm:grid-cols-3">
                             <button type="button" onClick={captureCustomerPhoto} className="rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-3 text-sm font-black text-white">
                               Capture Photo
+                            </button>
+                            <button type="button" onClick={switchCamera} className="rounded-xl border border-[#d4af37]/50 bg-[#fff9e8] px-5 py-3 text-sm font-black text-[#6f4a0b]">
+                              {cameraFacing === "user" ? "Use Rear Camera" : "Use Front Camera"}
                             </button>
                             <button type="button" onClick={stopCamera} className="rounded-xl border border-[#e7e2d9] bg-white px-5 py-3 text-sm font-black">
                               Close Camera
@@ -853,8 +896,49 @@ function CustomerPhoto({ customer }: { customer: Customer }) {
 }
 
 function VehiclePhoto({ vehicle }: { vehicle: Vehicle }) {
-  if (vehicle.vehicle_photo) return <img src={vehicle.vehicle_photo} alt={vehicle.vehicle_name} className="h-40 w-full object-cover" />;
-  return <div className="flex h-40 w-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(212,175,55,0.18),transparent_40%),linear-gradient(135deg,#111111,#3a2410)] text-4xl">🚗</div>;
+  const [imageFailed, setImageFailed] = useState(false);
+  const imagePath = resolveVehiclePhoto(vehicle.vehicle_photo);
+
+  if (imagePath && !imageFailed) {
+    return (
+      <img
+        src={imagePath}
+        alt={vehicle.vehicle_name || "Vehicle"}
+        className="h-44 w-full bg-[#111111] object-cover"
+        loading="lazy"
+        onError={() => setImageFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-44 w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(212,175,55,0.18),transparent_40%),linear-gradient(135deg,#111111,#3a2410)] text-white">
+      <span className="text-4xl">🚗</span>
+      <span className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-white/60">
+        Photo unavailable
+      </span>
+    </div>
+  );
+}
+
+function resolveVehiclePhoto(value: string | null | undefined) {
+  const rawPath = String(value || "").trim();
+  if (!rawPath) return "";
+
+  if (
+    rawPath.startsWith("http://") ||
+    rawPath.startsWith("https://") ||
+    rawPath.startsWith("data:") ||
+    rawPath.startsWith("blob:")
+  ) {
+    return rawPath;
+  }
+
+  let cleanPath = rawPath.replace(/\\/g, "/");
+  cleanPath = cleanPath.replace(/^\.\//, "");
+  cleanPath = cleanPath.replace(/^\/?public\//, "");
+
+  return cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
 }
 
 function MoneyCard({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {
