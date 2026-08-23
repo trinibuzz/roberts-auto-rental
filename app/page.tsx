@@ -45,7 +45,7 @@ export default async function PublicHomePage() {
         FROM vehicles
         WHERE LOWER(status) = 'available'
         ORDER BY vehicle_name ASC
-        LIMIT 6
+        LIMIT 3
       `
     ),
     db.query(
@@ -116,12 +116,18 @@ export default async function PublicHomePage() {
       </header>
 
       <section className="overflow-hidden bg-[#050505] text-white">
-        <div className="relative mx-auto aspect-video w-full max-w-[1920px] overflow-hidden bg-black">
-          <img
-            src="/images/roberts-customer-hero.png"
-            alt="Roberts Auto Rental and Leasing - Drive in Style"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+        <div className="relative mx-auto aspect-[9/16] w-full max-w-[1920px] overflow-hidden bg-black sm:aspect-video">
+          <picture>
+            <source
+              media="(min-width: 640px)"
+              srcSet="/images/roberts-customer-hero.png"
+            />
+            <img
+              src="/images/roberts-customer-hero-mobile.png"
+              alt="Roberts Auto Rental and Leasing - Drive in Style"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </picture>
 
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         </div>
