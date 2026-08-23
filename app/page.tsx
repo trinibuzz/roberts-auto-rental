@@ -115,85 +115,39 @@ export default async function PublicHomePage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#070707]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(212,175,55,0.35),transparent_34%),linear-gradient(90deg,#030303_0%,#111111_48%,#4b2c0d_100%)]" />
-        <div className="absolute inset-0 opacity-25">
-          <div className="h-full w-full bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_35%,rgba(212,175,55,0.12)_100%)]" />
+      <section className="overflow-hidden bg-[#050505] text-white">
+        <div className="relative mx-auto aspect-video w-full max-w-[1920px] overflow-hidden bg-black">
+          <img
+            src="/images/roberts-customer-hero.png"
+            alt="Roberts Auto Rental and Leasing - Drive in Style"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[660px] max-w-7xl gap-10 px-5 py-16 md:grid-cols-[1.05fr_0.95fr] md:items-center md:py-24">
-          <div>
-            <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-[#d4af37] backdrop-blur">
-              Premium Rental Experience
-            </div>
-
-            <h1 className="mt-7 font-serif text-5xl font-black leading-[0.95] text-white md:text-7xl">
-              Clean Cars.
-              <br />
-              Easy Booking.
-              <br />
-              Trusted Service.
-            </h1>
-
-            <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-white/75">
-              Book your vehicle online with Roberts Auto Rental. Choose your
-              dates, request your vehicle, and let our office team confirm your
-              rental professionally.
-            </p>
-
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+        <div className="border-t border-[#d4af37]/25 bg-[radial-gradient(circle_at_15%_0%,rgba(212,175,55,0.18),transparent_35%),#080808]">
+          <div className="mx-auto grid max-w-7xl gap-5 px-5 py-6 lg:grid-cols-[auto_1fr] lg:items-center lg:py-8">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/book"
-                className="rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-7 py-5 text-center text-sm font-black text-white shadow-xl transition hover:-translate-y-0.5"
+                className="rounded-2xl bg-gradient-to-r from-[#f0ce72] via-[#d4af37] to-[#b98320] px-8 py-5 text-center text-sm font-black text-black shadow-xl shadow-black/30 transition hover:-translate-y-0.5"
               >
                 Start Booking Request
               </Link>
 
               <Link
                 href="/fleet"
-                className="rounded-2xl border border-white/20 bg-white/10 px-7 py-5 text-center text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
+                className="rounded-2xl border border-[#d4af37]/35 bg-white/5 px-8 py-5 text-center text-sm font-black text-white transition hover:bg-white/10"
               >
-                View Fleet
+                View Available Fleet
               </Link>
             </div>
 
-            <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 lg:justify-self-end">
               <HeroStat value={String(availableVehicles)} label="Available" />
               <HeroStat value={String(recentRequests)} label="Requests" />
               <HeroStat value="24/7" label="Online" />
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-4 shadow-2xl backdrop-blur">
-            <div className="rounded-[1.6rem] bg-white p-6">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
-                How it works
-              </p>
-
-              <h2 className="mt-3 font-serif text-4xl font-black text-[#111111]">
-                Request today.
-                <br />
-                Confirm with office.
-              </h2>
-
-              <p className="mt-3 text-sm font-semibold leading-6 text-[#6b6257]">
-                Public bookings are sent to the office as pending requests so
-                staff can confirm availability, deposits, and documents.
-              </p>
-
-              <div className="mt-6 grid gap-3">
-                <MiniStep number="01" title="Choose your rental dates" />
-                <MiniStep number="02" title="Select an available vehicle" />
-                <MiniStep number="03" title="Submit your request" />
-                <MiniStep number="04" title="Office confirms your booking" />
-              </div>
-
-              <Link
-                href="/book"
-                className="mt-6 block rounded-2xl bg-[#111111] px-6 py-5 text-center text-sm font-black text-white"
-              >
-                Continue To Booking
-              </Link>
             </div>
           </div>
         </div>
@@ -314,18 +268,6 @@ function HeroStat({ value, label }: { value: string; label: string }) {
       <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white/60">
         {label}
       </p>
-    </div>
-  );
-}
-
-function MiniStep({ number, title }: { number: string; title: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-[#eee9df] bg-[#fbfaf8] p-4">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#d4af37] text-xs font-black text-white">
-        {number}
-      </span>
-
-      <span className="font-black text-[#111111]">{title}</span>
     </div>
   );
 }
