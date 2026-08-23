@@ -13,6 +13,14 @@ type UserRow = {
   status: string | null;
 };
 
+const authCookieNames = [
+  "robers_token",
+  "roberts_token",
+  "admin_token",
+  "roberts_rep_token",
+  "token",
+];
+
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
 
@@ -36,33 +44,37 @@ function createPool() {
 }
 
 function getRedirectForRole(role: string) {
-  const cleanRole = String(role || "").toLowerCase();
+  return role === "rep" ? "/rep" : "/admin/dashboard";
+}
 
-  if (cleanRole === "rep") {
-    return "/rep";
-  }
-
-  return "/admin/dashboard";
+function clearAuthCookies(response: NextResponse) {
+  authCookieNames.forEach((name) => {
+    response.cookies.set(name, "", {
+      expires: new Date(0),
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  });
 }
 
 export async function POST(request: NextRequest) {
+  let pool: ReturnType<typeof createPool> | null = null;
+
   try {
     const body = await request.json();
-
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
 
     if (!email || !password) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Email and password are required.",
-        },
+        { success: false, message: "Email and password are required." },
         { status: 400 }
       );
     }
 
-    const pool = createPool();
+    pool = createPool();
 
     const [rows] = await pool.execute(
       `
@@ -74,22 +86,16 @@ export async function POST(request: NextRequest) {
       [email]
     );
 
-    const users = rows as UserRow[];
-    const user = users[0];
+    const user = (rows as UserRow[])[0];
 
     if (!user) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid email or password.",
-        },
+        { success: false, message: "Invalid email or password." },
         { status: 401 }
       );
     }
 
-    const status = String(user.status || "active").toLowerCase();
-
-    if (status !== "active") {
+    if (String(user.status || "active").toLowerCase() !== "active") {
       return NextResponse.json(
         {
           success: false,
@@ -99,20 +105,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const savedPassword = String(user.password || "");
-
-    if (savedPassword !== password) {
+    // Keep the existing comparison until the database passwords are migrated.
+    if (String(user.password || "") !== password) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid email or password.",
-        },
+        { success: false, message: "Invalid email or password." },
         { status: 401 }
       );
     }
 
     const cleanRole = String(user.role || "staff").toLowerCase();
-
     const token = jwt.sign(
       {
         id: user.id,
@@ -124,12 +125,10 @@ export async function POST(request: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    const redirectTo = getRedirectForRole(cleanRole);
-
     const response = NextResponse.json({
       success: true,
       message: "Login successful.",
-      redirectTo,
+      redirectTo: getRedirectForRole(cleanRole),
       user: {
         id: user.id,
         name: user.name,
@@ -137,6 +136,9 @@ export async function POST(request: NextRequest) {
         role: cleanRole,
       },
     });
+
+    // Remove any session left by the previous account before setting the new one.
+    clearAuthCookies(response);
 
     const cookieOptions = {
       httpOnly: true,
@@ -146,21 +148,24 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     };
 
-    response.cookies.set("robers_token", token, cookieOptions);
-    response.cookies.set("roberts_token", token, cookieOptions);
-    response.cookies.set("admin_token", token, cookieOptions);
-    response.cookies.set("roberts_rep_token", token, cookieOptions);
+    if (cleanRole === "rep") {
+      response.cookies.set("roberts_rep_token", token, cookieOptions);
+    } else {
+      // Retain the legacy admin cookie names until all admin pages use admin_token.
+      response.cookies.set("admin_token", token, cookieOptions);
+      response.cookies.set("roberts_token", token, cookieOptions);
+      response.cookies.set("robers_token", token, cookieOptions);
+    }
 
     return response;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(
-      {
-        success: false,
-        message: "Something went wrong during login.",
-      },
+      { success: false, message: "Something went wrong during login." },
       { status: 500 }
     );
+  } finally {
+    if (pool) await pool.end();
   }
 }
