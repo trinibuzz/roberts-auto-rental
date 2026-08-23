@@ -5,13 +5,19 @@ import { verifyToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+const sessionCookieNames = [
+  "roberts_rep_token",
+  "roberts_token",
+  "robers_token",
+  "admin_token",
+  "token",
+];
+
 async function requireRepUser() {
-  const token =
-    cookies().get("roberts_rep_token")?.value ||
-    cookies().get("roberts_token")?.value ||
-    cookies().get("robers_token")?.value ||
-    cookies().get("admin_token")?.value ||
-    cookies().get("token")?.value;
+  const cookieStore = cookies();
+  const token = sessionCookieNames
+    .map((name) => cookieStore.get(name)?.value)
+    .find(Boolean);
 
   if (!token) {
     redirect("/admin/login");
@@ -26,12 +32,50 @@ async function requireRepUser() {
   return user;
 }
 
+async function logoutRep() {
+  "use server";
+
+  const cookieStore = cookies();
+
+  sessionCookieNames.forEach((name) => {
+    cookieStore.set(name, "", {
+      expires: new Date(0),
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  });
+
+  redirect("/admin/login");
+}
+
 export default async function RepBookingFrontPage() {
   await requireRepUser();
 
   return (
     <main className="min-h-screen bg-black text-white">
       <section className="mx-auto min-h-screen max-w-[480px] bg-black pb-28">
+        <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-[#d4af37]/20 bg-[#050505]/95 px-4 py-3 shadow-xl backdrop-blur-xl">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#d4af37]">
+              Roberts Rep Mode
+            </p>
+            <p className="mt-1 font-serif text-lg font-black text-white">
+              Rep Profile
+            </p>
+          </div>
+
+          <form action={logoutRep}>
+            <button
+              type="submit"
+              className="rounded-xl border border-red-400/40 bg-red-600 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white shadow-lg transition hover:bg-red-700"
+            >
+              Log Out
+            </button>
+          </form>
+        </header>
+
         <div className="relative mx-auto w-full overflow-hidden bg-black">
           <img
             src="/images/drive-in-style-premium-rentals.png"
