@@ -70,23 +70,23 @@ export default async function PublicHomePage() {
 
   return (
     <main className="min-h-screen bg-[#f7f3ea] text-[#151515]">
-      <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-md ring-1 ring-black/10">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 px-3 py-4 shadow-sm backdrop-blur-xl sm:px-5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 sm:gap-4">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-md ring-1 ring-[#d4af37]/35">
               <img
                 src="/images/roberts-logo.png"
                 alt="Roberts Auto Rental"
-                className="h-full w-full object-contain"
+                className="h-full w-full scale-[1.55] object-contain"
               />
             </div>
 
-            <div>
-              <p className="font-serif text-xl font-black leading-tight">
+            <div className="min-w-0">
+              <p className="font-serif text-lg font-black leading-tight sm:text-xl">
                 Roberts Auto Rental
               </p>
 
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#b98320] sm:text-xs sm:tracking-[0.22em]">
                 Drive With Confidence
               </p>
             </div>
@@ -108,7 +108,7 @@ export default async function PublicHomePage() {
 
           <Link
             href="/book"
-            className="rounded-full bg-[#111111] px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5"
+            className="flex min-h-14 min-w-[108px] shrink-0 items-center justify-center whitespace-nowrap rounded-full border-2 border-[#d4af37] bg-[#111111] px-4 py-3 text-center text-[13px] font-black leading-none text-white shadow-lg shadow-[#d4af37]/15 transition hover:-translate-y-0.5 hover:bg-[#1a1a1a] sm:px-5 sm:text-sm"
           >
             Book Now
           </Link>
