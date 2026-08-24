@@ -131,7 +131,9 @@ export async function POST(
        FROM customer_signatures
        WHERE booking_id = ?
          AND signature_data IS NOT NULL
-         AND signature_data <> ''`,
+         AND signature_data <> ''
+         AND rep_signature_data IS NOT NULL
+         AND rep_signature_data <> ''`,
       [bookingId]
     );
 
@@ -142,7 +144,10 @@ export async function POST(
     if (signatureTotal < 1) {
       await connection.rollback();
       return NextResponse.json(
-        { success: false, message: "Customer signature is required." },
+        {
+          success: false,
+          message: "Customer and representative signatures are required.",
+        },
         { status: 400 }
       );
     }

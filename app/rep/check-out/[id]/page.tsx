@@ -44,11 +44,14 @@ export default function RepCheckoutPage() {
   const [cameraError, setCameraError] = useState("");
   const [signedName, setSignedName] = useState("");
   const [hasSignature, setHasSignature] = useState(false);
+  const [hasRepSignature, setHasRepSignature] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const signingRef = useRef(false);
+  const repSignatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const repSigningRef = useRef(false);
 
   const [form, setForm] = useState({
     checkout_mileage: "",
@@ -96,6 +99,7 @@ export default function RepCheckoutPage() {
       setMedia(data.media || []);
       setSignedName((current) => current || data.booking.full_name || "");
       setHasSignature(false);
+      setHasRepSignature(false);
     } catch {
       setError("Unable to load booking.");
     } finally {
@@ -165,11 +169,74 @@ export default function RepCheckoutPage() {
     setHasSignature(false);
   }
 
+  function repSignaturePoint(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = repSignatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+    };
+  }
+
+  function startRepSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = repSignatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    repSigningRef.current = true;
+    const point = repSignaturePoint(event);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+  }
+
+  function drawRepSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!repSigningRef.current) return;
+
+    const canvas = repSignatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    event.preventDefault();
+    const point = repSignaturePoint(event);
+    context.lineWidth = 4;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#111827";
+    context.lineTo(point.x, point.y);
+    context.stroke();
+    setHasRepSignature(true);
+  }
+
+  function stopRepSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!repSigningRef.current) return;
+    event.preventDefault();
+    repSigningRef.current = false;
+  }
+
+  function clearRepSignature() {
+    const canvas = repSignatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    setHasRepSignature(false);
+  }
+
   async function saveSignature() {
     const canvas = signatureCanvasRef.current;
 
+    const repCanvas = repSignatureCanvasRef.current;
+
     if (!canvas || !hasSignature || !signedName.trim()) {
       throw new Error("Customer name and signature are required.");
+    }
+
+    if (!repCanvas || !hasRepSignature) {
+      throw new Error("Representative signature is required.");
     }
 
     const response = await fetch(
@@ -180,6 +247,7 @@ export default function RepCheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           signature_data: canvas.toDataURL("image/png"),
+          rep_signature_data: repCanvas.toDataURL("image/png"),
           signed_name: signedName.trim(),
         }),
       }
@@ -348,6 +416,11 @@ export default function RepCheckoutPage() {
 
     if (!hasSignature) {
       setError("The customer must sign before check-out.");
+      return;
+    }
+
+    if (!hasRepSignature) {
+      setError("The representative must sign before check-out.");
       return;
     }
 
@@ -728,6 +801,47 @@ export default function RepCheckoutPage() {
                   >
                     Clear Signature
                   </button>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-[#e7e2d9] pt-6">
+                <h4 className="text-lg font-black text-[#1d1d1f]">
+                  Staff / Representative Signature
+                </h4>
+
+                <p className="mt-1 text-sm font-semibold text-[#7a7168]">
+                  The representative confirms the inspection and vehicle release.
+                </p>
+
+                <div className="mt-4 overflow-hidden rounded-2xl border-2 border-[#d8d0c4] bg-white">
+                  <canvas
+                    ref={repSignatureCanvasRef}
+                    width={900}
+                    height={320}
+                    onPointerDown={startRepSignature}
+                    onPointerMove={drawRepSignature}
+                    onPointerUp={stopRepSignature}
+                    onPointerCancel={stopRepSignature}
+                    onPointerLeave={stopRepSignature}
+                    className="block h-48 w-full touch-none bg-white"
+                    aria-label="Representative signature pad"
+                  />
+
+                  <div className="flex items-center justify-between border-t border-[#e7e2d9] bg-[#fbfaf8] px-4 py-3">
+                    <p className="text-xs font-bold text-[#7a7168]">
+                      {hasRepSignature
+                        ? "Staff signature captured"
+                        : "Representative signs inside the box"}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={clearRepSignature}
+                      className="rounded-xl border border-[#d8d0c4] bg-white px-4 py-2 text-xs font-black"
+                    >
+                      Clear Staff Signature
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>

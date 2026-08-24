@@ -46,6 +46,7 @@ export async function POST(
     const body = await request.json();
     const signedName = String(body.signed_name || "").trim();
     const signatureData = String(body.signature_data || "");
+    const repSignatureData = String(body.rep_signature_data || "");
 
     if (!signedName) {
       return NextResponse.json(
@@ -61,7 +62,20 @@ export async function POST(
       );
     }
 
-    if (signatureData.length > 2_500_000) {
+    if (!repSignatureData.startsWith("data:image/png;base64,")) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "A valid representative signature is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      signatureData.length > 2_500_000 ||
+      repSignatureData.length > 2_500_000
+    ) {
       return NextResponse.json(
         { success: false, message: "The signature image is too large." },
         { status: 400 }
@@ -110,8 +124,10 @@ export async function POST(
         vehicle_id,
         signature_data,
         signed_name,
-        rep_name
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
+        rep_name,
+        rep_signature_data,
+        rep_signed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         bookingId,
         booking.customer_id,
@@ -119,6 +135,7 @@ export async function POST(
         signatureData,
         signedName,
         String(user.name || "Representative"),
+        repSignatureData,
       ]
     );
 

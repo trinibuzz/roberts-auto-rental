@@ -73,6 +73,8 @@ type CustomerSignature = {
   signed_name: string | null;
   signed_at: string;
   rep_name: string | null;
+  rep_signature_data: string | null;
+  rep_signed_at: string | null;
 };
 
 export default async function BookingDetailPage({
@@ -201,7 +203,8 @@ export default async function BookingDetailPage({
   }[];
 
   const [signatureRows] = await db.query(
-    `SELECT id, signature_data, signed_name, signed_at, rep_name
+    `SELECT id, signature_data, signed_name, signed_at, rep_name,
+            rep_signature_data, rep_signed_at
      FROM customer_signatures
      WHERE booking_id = ?
      ORDER BY signed_at DESC
@@ -646,13 +649,30 @@ export default async function BookingDetailPage({
                 </div>
 
                 <div>
+                  {customerSignature?.rep_signature_data ? (
+                    <div className="mb-3 rounded-xl border border-gray-200 bg-white p-3">
+                      <img
+                        src={customerSignature.rep_signature_data}
+                        alt="Staff signature"
+                        className="h-24 w-full object-contain object-left"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-3 h-24 rounded-xl border border-dashed border-gray-300" />
+                  )}
+
                   <div className="border-t border-gray-400 pt-3">
                     <p className="text-sm font-semibold text-gray-900">
                       Staff Signature
                     </p>
                     <p className="text-xs text-gray-500">
-                      Roberts Auto Rental
+                      {customerSignature?.rep_name || "Roberts Auto Rental"}
                     </p>
+                    {customerSignature?.rep_signed_at && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Signed {formatDate(customerSignature.rep_signed_at)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
