@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 async function isAuthorized() {
   const token =
@@ -22,7 +18,10 @@ async function isAuthorized() {
   return Boolean(await verifyToken(token));
 }
 
-export async function POST(request: Request) {
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     if (!(await isAuthorized())) {
       return NextResponse.json(
@@ -34,37 +33,41 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const bookingId = Number(formData.get("booking_id") || 0);
-    const note = String(formData.get("note") || "").trim();
+    const bookingId = Number(params.id);
 
     if (!Number.isInteger(bookingId) || bookingId <= 0) {
       return NextResponse.json(
         {
           success: false,
-          message: "A valid booking ID is required.",
+          message: "Invalid booking ID.",
         },
         { status: 400 }
       );
     }
 
-    const [bookingRows] = await db.query(
+    const [rows] = await db.query(
       `
-        SELECT id, status
+        SELECT
+          bookings.*,
+          customers.full_name,
+          customers.phone,
+          customers.customer_photo,
+          vehicles.vehicle_name,
+          vehicles.plate_number,
+          vehicles.vehicle_photo
         FROM bookings
-        WHERE id = ?
+        LEFT JOIN customers
+          ON customers.id = bookings.customer_id
+        LEFT JOIN vehicles
+          ON vehicles.id = bookings.vehicle_id
+        WHERE bookings.id = ?
         LIMIT 1
       `,
       [bookingId]
     );
 
-    const booking = (
-      bookingRows as Array<{
-        id: number;
-        status: string | null;
-      }>
-    )[0];
+    const bookings = rows as any[];
+    const booking = bookings[0];
 
     if (!booking) {
       return NextResponse.json(
@@ -76,108 +79,34 @@ export async function POST(request: Request) {
       );
     }
 
-    if (String(booking.status || "").toLowerCase() === "rented") {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "This vehicle has already been checked out. Additional checkout media cannot be added here.",
-        },
-        { status: 409 }
-      );
-    }
-
-    if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "No photo or video was selected.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const isImage = file.type.startsWith("image/");
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isImage && !isVideo) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Only photo or video files are allowed.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const maxSize = 80 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "The file is too large. Maximum size is 80 MB.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const originalExtension = path
-      .extname(file.name || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9.]/g, "");
-
-    const extension =
-      originalExtension || (isVideo ? ".mp4" : ".jpg");
-
-    const fileName = `${Date.now()}-${randomUUID()}${extension}`;
-
-    const uploadDirectory = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "checkout"
-    );
-
-    await mkdir(uploadDirectory, { recursive: true });
-
-    const filePath = path.join(uploadDirectory, fileName);
-
-    await writeFile(filePath, buffer);
-
-    const mediaUrl = `/uploads/checkout/${fileName}`;
-    const mediaType = isVideo ? "video" : "photo";
-
-    await db.query(
+    const [mediaRows] = await db.query(
       `
-        INSERT INTO booking_checkout_media (
+        SELECT
+          id,
           booking_id,
           media_type,
           media_url,
-          note
-        ) VALUES (?, ?, ?, ?)
+          note,
+          created_at
+        FROM booking_checkout_media
+        WHERE booking_id = ?
+        ORDER BY created_at DESC
       `,
-      [bookingId, mediaType, mediaUrl, note || null]
+      [bookingId]
     );
 
     return NextResponse.json({
       success: true,
-      message: `${
-        mediaType === "video" ? "Video" : "Photo"
-      } uploaded successfully.`,
-      mediaUrl,
-      mediaType,
+      booking,
+      media: mediaRows,
     });
   } catch (error) {
-    console.error("REP CHECKOUT MEDIA ERROR:", error);
+    console.error("REP GET BOOKING ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to upload check-out media.",
+        message: "Failed to load booking.",
       },
       { status: 500 }
     );
