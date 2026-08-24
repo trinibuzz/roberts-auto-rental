@@ -247,7 +247,7 @@ function PickupCard({
 
           {ready ? (
             <Link
-              href={`/rep/workflow/${booking.id}`}
+              href={`/rep/check-out/${booking.id}`}
               className="block rounded-2xl bg-gradient-to-r from-[#d4af37] to-[#b98320] px-5 py-5 text-center text-base font-black text-white shadow-lg"
             >
               Start Check-Out
