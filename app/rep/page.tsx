@@ -53,11 +53,11 @@ const navigation = [
 ];
 
 const bookingSteps = [
-  { number: "01", label: "Customer", detail: "Select or add customer", icon: "●" },
-  { number: "02", label: "Vehicle", detail: "Choose an available car", icon: "◆" },
-  { number: "03", label: "Dates", detail: "Set pickup and return", icon: "■" },
-  { number: "04", label: "Payment", detail: "Record rental payment", icon: "$" },
-  { number: "05", label: "Check-Out", detail: "Inspect, sign and release", icon: "✓" },
+  { number: "01", label: "Customer", icon: "customer" },
+  { number: "02", label: "Vehicle", icon: "vehicle" },
+  { number: "03", label: "Dates", icon: "calendar" },
+  { number: "04", label: "Payment", icon: "payment" },
+  { number: "05", label: "Check-Out", icon: "checkout" },
 ];
 
 export default async function RepBookingFrontPage() {
@@ -169,30 +169,28 @@ export default async function RepBookingFrontPage() {
             </span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-5 sm:gap-3">
             {bookingSteps.map((step, index) => (
               <article
                 key={step.number}
                 className={
-                  index === bookingSteps.length - 1
-                    ? "rounded-[1.5rem] border border-[#d4af37]/35 bg-gradient-to-br from-[#fff8df] to-white p-4 shadow-lg shadow-black/5 sm:col-span-2"
-                    : "rounded-[1.5rem] border border-[#e7dfd1] bg-white p-4 shadow-lg shadow-black/5"
+                  `${index < 3 ? "col-span-2" : "col-span-3"} ` +
+                  (index === bookingSteps.length - 1
+                    ? "rounded-2xl border border-[#d4af37]/40 bg-gradient-to-br from-[#fff8df] to-white p-3 shadow-lg shadow-black/5 sm:col-span-1"
+                    : "rounded-2xl border border-[#e7dfd1] bg-white p-3 shadow-lg shadow-black/5 sm:col-span-1")
                 }
               >
-                <div className="flex items-center gap-4">
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#111111] text-xl font-black text-[#e3bd3c] shadow-md">
-                    {step.icon}
+                <div className="text-center">
+                  <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111111] text-[#e3bd3c] shadow-md sm:h-14 sm:w-14">
+                    <StepIcon type={step.icon} />
                     <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#d4af37] px-1 text-[8px] font-black text-black">
                       {step.number}
                     </span>
                   </div>
 
-                  <div>
-                    <h3 className="font-serif text-xl font-black">{step.label}</h3>
-                    <p className="mt-1 text-xs font-semibold text-[#786e62]">
-                      {step.detail}
-                    </p>
-                  </div>
+                  <h3 className="mt-3 text-[10px] font-black uppercase tracking-[0.04em] text-[#28231d] sm:text-xs">
+                    {step.label}
+                  </h3>
                 </div>
               </article>
             ))}
@@ -218,5 +216,54 @@ export default async function RepBookingFrontPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function StepIcon({ type }: { type: string }) {
+  const common = "h-6 w-6 sm:h-7 sm:w-7";
+
+  if (type === "customer") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={common} aria-hidden="true">
+        <circle cx="12" cy="8" r="3" />
+        <path d="M5.5 20c.8-4 3-6 6.5-6s5.7 2 6.5 6" />
+      </svg>
+    );
+  }
+
+  if (type === "vehicle") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={common} aria-hidden="true">
+        <path d="M4 15l2-6h12l2 6v4h-2v-2H6v2H4z" />
+        <circle cx="7.5" cy="14.5" r="1" fill="currentColor" />
+        <circle cx="16.5" cy="14.5" r="1" fill="currentColor" />
+      </svg>
+    );
+  }
+
+  if (type === "calendar") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={common} aria-hidden="true">
+        <rect x="4" y="5" width="16" height="15" rx="2" />
+        <path d="M8 3v4M16 3v4M4 10h16" />
+      </svg>
+    );
+  }
+
+  if (type === "payment") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={common} aria-hidden="true">
+        <rect x="3" y="6" width="18" height="13" rx="2" />
+        <path d="M3 10h18M7 15h4" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={common} aria-hidden="true">
+      <path d="M9 5h6M9 3h6v4H9z" />
+      <path d="M7 5H5v16h14V5h-2" />
+      <path d="M8 14l2.5 2.5L16 11" />
+    </svg>
   );
 }
