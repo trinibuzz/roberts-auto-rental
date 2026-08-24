@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -78,7 +80,7 @@ export default async function BookingDetailPage({
     redirect("/admin/login");
   }
 
-  const user = verifyToken(token);
+  const user = await verifyToken(token);
 
   if (!user) {
     redirect("/admin/login");
@@ -145,7 +147,7 @@ export default async function BookingDetailPage({
   const [inspectionRows] = await db.query(
     `
     SELECT *
-    FROM vehicle_inspections
+    FROM booking_checkout_records
     WHERE booking_id = ?
     ORDER BY created_at DESC
     LIMIT 1
@@ -169,19 +171,24 @@ export default async function BookingDetailPage({
 
   const [mediaRows] = await db.query(
     `
-    SELECT *
-    FROM vehicle_inspection_media
+    SELECT
+      id,
+      media_type,
+      media_url,
+      note,
+      created_at
+    FROM booking_checkout_media
     WHERE booking_id = ?
-    AND deleted_at IS NULL
     ORDER BY created_at DESC
     `,
     [bookingId]
   );
 
-  const videos = mediaRows as {
+  const inspectionMedia = mediaRows as {
     id: number;
-    inspection_type: string;
-    file_url: string;
+    media_type: "photo" | "video";
+    media_url: string;
+    note: string | null;
     created_at: string;
   }[];
 
@@ -399,37 +406,51 @@ export default async function BookingDetailPage({
 
               <div className="mt-8 rounded-2xl border border-gray-200 p-6">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Inspection Video Evidence
+                  Check-Out Photo / Video Evidence
                 </h3>
 
-                {videos.length === 0 ? (
+                {inspectionMedia.length === 0 ? (
                   <p className="mt-3 text-sm text-gray-500">
-                    No inspection videos uploaded for this booking yet.
+                    No check-out photos or videos have been uploaded for this booking.
                   </p>
                 ) : (
-                  <div className="mt-4 space-y-4">
-                    {videos.map((video) => (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {inspectionMedia.map((item) => (
                       <div
-                        key={video.id}
+                        key={item.id}
                         className="rounded-xl border border-gray-200 p-4"
                       >
                         <div className="mb-3 flex items-center justify-between">
                           <p className="font-semibold capitalize text-gray-900">
-                            {video.inspection_type} video
+                            Check-out {item.media_type}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {formatDate(video.created_at)}
+                            {formatDate(item.created_at)}
                           </p>
                         </div>
 
-                        <video
-                          src={video.file_url}
-                          controls
-                          className="w-full rounded-lg border bg-black print:hidden"
-                        />
+                        {item.media_type === "video" ? (
+                          <video
+                            src={item.media_url}
+                            controls
+                            className="w-full rounded-lg border bg-black print:hidden"
+                          />
+                        ) : (
+                          <img
+                            src={item.media_url}
+                            alt="Vehicle check-out evidence"
+                            className="w-full rounded-lg border object-cover"
+                          />
+                        )}
+
+                        {item.note && (
+                          <p className="mt-3 text-xs text-gray-600">
+                            {item.note}
+                          </p>
+                        )}
 
                         <p className="hidden text-sm text-gray-600 print:block">
-                          Video evidence uploaded: {video.file_url}
+                          Evidence uploaded: {item.media_url}
                         </p>
                       </div>
                     ))}

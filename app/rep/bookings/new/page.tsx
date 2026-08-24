@@ -49,6 +49,8 @@ type BookingForm = {
   extra_charges: string;
   total_amount: string;
   amount_paid: string;
+  payment_method: string;
+  payment_reference: string;
   balance: string;
   status: string;
   notes: string;
@@ -117,6 +119,8 @@ export default function RepNewBookingPage() {
     extra_charges: "0",
     total_amount: "0",
     amount_paid: "0",
+    payment_method: "cash",
+    payment_reference: "",
     balance: "0",
     status: "confirmed",
     notes: "",
@@ -798,6 +802,18 @@ export default function RepNewBookingPage() {
                   <Input label="Discount" value={form.discount} onChange={(value) => updateField("discount", value)} type="number" />
                   <Input label="Extra Charges" value={form.extra_charges} onChange={(value) => updateField("extra_charges", value)} type="number" />
                   <Input label="Amount Paid" value={form.amount_paid} onChange={(value) => updateField("amount_paid", value)} type="number" />
+                  <label>
+                    <span className="block text-sm font-black text-[#4b443d]">Payment Method</span>
+                    <select value={form.payment_method} onChange={(event) => updateField("payment_method", event.target.value)} className="mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15">
+                      <option value="cash">Cash</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="card">Card</option>
+                      <option value="online_payment">Online Payment</option>
+                      <option value="cheque">Cheque</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <Input label="Payment Reference" value={form.payment_reference} onChange={(value) => updateField("payment_reference", value)} />
                   <label><span className="block text-sm font-black text-[#4b443d]">Booking Status</span><select value={form.status} onChange={(event) => updateField("status", event.target.value)} className="mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-5 text-lg font-semibold outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/15"><option value="confirmed">Confirmed</option><option value="reserved">Reserved</option><option value="rented">Rented</option></select></label>
                 </div>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3"><MoneyCard label="Total" value={form.total_amount} /><MoneyCard label="Paid" value={form.amount_paid} /><MoneyCard label="Balance" value={form.balance} danger /></div>
