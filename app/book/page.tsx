@@ -19,6 +19,16 @@ function createRequestNumber() {
   return `RAR-${stamp}`;
 }
 
+function isValidDateOfBirth(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const date = new Date(`${value}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return !Number.isNaN(date.getTime()) && date <= today;
+}
+
 async function submitBookingRequest(formData: FormData) {
   "use server";
 
@@ -26,6 +36,7 @@ async function submitBookingRequest(formData: FormData) {
   const vehicleId = vehicleIdRaw ? Number(vehicleIdRaw) : null;
 
   const fullName = String(formData.get("full_name") || "").trim();
+  const dateOfBirth = String(formData.get("date_of_birth") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const phone = String(formData.get("phone") || "").trim();
   const pickupDate = String(formData.get("pickup_date") || "").trim();
@@ -34,8 +45,12 @@ async function submitBookingRequest(formData: FormData) {
   const returnTime = String(formData.get("return_time") || "").trim();
   const notes = String(formData.get("notes") || "").trim();
 
-  if (!fullName || !phone || !pickupDate || !returnDate) {
+  if (!fullName || !phone || !dateOfBirth || !pickupDate || !returnDate) {
     redirect("/book?error=missing");
+  }
+
+  if (!isValidDateOfBirth(dateOfBirth)) {
+    redirect("/book?error=dob");
   }
 
   let vehicleName = "Customer did not select a vehicle";
@@ -69,6 +84,7 @@ async function submitBookingRequest(formData: FormData) {
         vehicle_id,
         vehicle_name,
         full_name,
+        date_of_birth,
         email,
         phone,
         pickup_date,
@@ -78,13 +94,14 @@ async function submitBookingRequest(formData: FormData) {
         notes,
         status
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `,
     [
       createRequestNumber(),
       vehicleId,
       vehicleName,
       fullName,
+      dateOfBirth,
       email || null,
       phone,
       pickupDate,
@@ -110,6 +127,7 @@ export default async function PublicBookingPage({
   const selectedVehicleId = String(searchParams?.vehicle_id || "");
   const success = searchParams?.success === "1";
   const error = searchParams?.error || "";
+  const today = new Date().toISOString().slice(0, 10);
 
   const [rows] = await db.query(
     `
@@ -212,10 +230,16 @@ export default async function PublicBookingPage({
             </div>
           ) : null}
 
-          {error ? (
+          {error === "missing" ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
-              Please complete your name, phone number, pickup date, and return
-              date.
+              Please complete your name, date of birth, phone number, pickup
+              date, and return date.
+            </div>
+          ) : null}
+
+          {error === "dob" ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
+              Please enter a valid date of birth.
             </div>
           ) : null}
 
@@ -238,7 +262,7 @@ export default async function PublicBookingPage({
                       [vehicle.year, vehicle.make, vehicle.model]
                         .filter(Boolean)
                         .join(" ") ||
-                      `Vehicle #${vehicle.id}`}{" "}
+                      `Vehicle #${vehicle.id}`} {" "}
                     - {formatMoney(vehicle.daily_rate)} / day
                   </option>
                 ))}
@@ -249,7 +273,7 @@ export default async function PublicBookingPage({
               <FormInput
                 label="Full Name"
                 name="full_name"
-                placeholder="Your full name"
+                placeholder="Your full legal name"
                 required
               />
 
@@ -261,12 +285,28 @@ export default async function PublicBookingPage({
               />
             </div>
 
-            <FormInput
-              label="Email Address"
-              name="email"
-              type="email"
-              placeholder="name@email.com"
-            />
+            <div className="grid gap-5 md:grid-cols-2">
+              <FormInput
+                label="Date of Birth"
+                name="date_of_birth"
+                type="date"
+                max={today}
+                required
+              />
+
+              <FormInput
+                label="Email Address"
+                name="email"
+                type="email"
+                placeholder="name@email.com"
+              />
+            </div>
+
+            <p className="-mt-2 text-xs font-semibold leading-5 text-[#7a7168]">
+              Enter the date of birth of the person who will be driving the
+              vehicle. Identification will be verified before the rental is
+              confirmed.
+            </p>
 
             <div className="grid gap-5 md:grid-cols-2">
               <FormInput
@@ -342,12 +382,14 @@ function FormInput({
   type = "text",
   placeholder,
   required = false,
+  max,
 }: {
   label: string;
   name: string;
   type?: string;
   placeholder?: string;
   required?: boolean;
+  max?: string;
 }) {
   return (
     <label className="block">
@@ -358,6 +400,7 @@ function FormInput({
         type={type}
         placeholder={placeholder}
         required={required}
+        max={max}
         className="mt-2 w-full rounded-2xl border border-gray-300 px-4 py-4 font-semibold outline-none focus:border-[#d4af37]"
       />
     </label>
