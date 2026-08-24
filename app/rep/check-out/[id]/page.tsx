@@ -42,9 +42,13 @@ export default function RepCheckoutPage() {
   const [success, setSuccess] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [signedName, setSignedName] = useState("");
+  const [hasSignature, setHasSignature] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const signingRef = useRef(false);
 
   const [form, setForm] = useState({
     checkout_mileage: "",
@@ -90,6 +94,8 @@ export default function RepCheckoutPage() {
 
       setBooking(data.booking);
       setMedia(data.media || []);
+      setSignedName((current) => current || data.booking.full_name || "");
+      setHasSignature(false);
     } catch {
       setError("Unable to load booking.");
     } finally {
@@ -99,6 +105,90 @@ export default function RepCheckoutPage() {
 
   function updateField(name: string, value: string) {
     setForm((previous) => ({ ...previous, [name]: value }));
+  }
+
+  function signaturePoint(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+    };
+  }
+
+  function startSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    signingRef.current = true;
+
+    const point = signaturePoint(event);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+  }
+
+  function drawSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!signingRef.current) return;
+
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    event.preventDefault();
+    const point = signaturePoint(event);
+    context.lineWidth = 4;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#111827";
+    context.lineTo(point.x, point.y);
+    context.stroke();
+    setHasSignature(true);
+  }
+
+  function stopSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!signingRef.current) return;
+    event.preventDefault();
+    signingRef.current = false;
+  }
+
+  function clearSignature() {
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    setHasSignature(false);
+  }
+
+  async function saveSignature() {
+    const canvas = signatureCanvasRef.current;
+
+    if (!canvas || !hasSignature || !signedName.trim()) {
+      throw new Error("Customer name and signature are required.");
+    }
+
+    const response = await fetch(
+      `/api/rep/bookings/${bookingId}/signature`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signature_data: canvas.toDataURL("image/png"),
+          signed_name: signedName.trim(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Failed to save customer signature.");
+    }
   }
 
   async function uploadMediaFile(file: File, note = "") {
@@ -251,9 +341,21 @@ export default function RepCheckoutPage() {
       return;
     }
 
+    if (!signedName.trim()) {
+      setError("Enter the customer name beneath the signature.");
+      return;
+    }
+
+    if (!hasSignature) {
+      setError("The customer must sign before check-out.");
+      return;
+    }
+
     setSaving(true);
 
     try {
+      await saveSignature();
+
       const equipmentNotes = [
         "Safety equipment verification:",
         `Spare tyre in vehicle: ${form.spare_tyre_present}`,
@@ -288,8 +390,12 @@ export default function RepCheckoutPage() {
       setSuccess("Vehicle checked out successfully.");
       router.push("/rep");
       router.refresh();
-    } catch {
-      setError("Unable to complete check-out.");
+    } catch (checkoutError) {
+      setError(
+        checkoutError instanceof Error
+          ? checkoutError.message
+          : "Unable to save the signature or complete check-out."
+      );
     } finally {
       setSaving(false);
     }
@@ -565,6 +671,64 @@ export default function RepCheckoutPage() {
                     </p>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-[#d4af37]/40 bg-white p-5 shadow-xl shadow-black/5">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b98320]">
+                Required Signature
+              </p>
+
+              <h3 className="mt-2 font-serif text-3xl font-black">
+                Customer Acceptance
+              </h3>
+
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#7a7168]">
+                The customer must sign with a finger, stylus, or mouse before
+                the vehicle can be released.
+              </p>
+
+              <label className="mt-5 block">
+                <span className="block text-sm font-black text-[#4b443d]">
+                  Customer Name
+                </span>
+
+                <input
+                  type="text"
+                  value={signedName}
+                  onChange={(event) => setSignedName(event.target.value)}
+                  className="mt-2 w-full rounded-2xl border-2 border-[#e7e2d9] bg-white px-5 py-4 text-lg font-semibold text-[#111827] outline-none focus:border-[#d4af37]"
+                  placeholder="Name of person signing"
+                />
+              </label>
+
+              <div className="mt-4 overflow-hidden rounded-2xl border-2 border-[#d8d0c4] bg-white">
+                <canvas
+                  ref={signatureCanvasRef}
+                  width={900}
+                  height={320}
+                  onPointerDown={startSignature}
+                  onPointerMove={drawSignature}
+                  onPointerUp={stopSignature}
+                  onPointerCancel={stopSignature}
+                  onPointerLeave={stopSignature}
+                  className="block h-48 w-full touch-none bg-white"
+                  aria-label="Customer signature pad"
+                />
+
+                <div className="flex items-center justify-between border-t border-[#e7e2d9] bg-[#fbfaf8] px-4 py-3">
+                  <p className="text-xs font-bold text-[#7a7168]">
+                    {hasSignature ? "Signature captured" : "Sign inside the box"}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={clearSignature}
+                    className="rounded-xl border border-[#d8d0c4] bg-white px-4 py-2 text-xs font-black"
+                  >
+                    Clear Signature
+                  </button>
+                </div>
               </div>
             </section>
           </>
