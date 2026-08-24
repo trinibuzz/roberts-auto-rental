@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
             Roberts Auto Rental
           </h1>
 
-          <p className="mt-2 text-sm font-bold text-[#d4af37]">
+          <p clclassName="mt-2 w-full rounded-2xl border border-gray-300 bg-white px-4 py-4 text-lg font-semibold text-[#111827] caret-[#111827] outline-none placeholder:text-gray-400 focus:border-[#d4af37]">
             Fleet, Booking & Staff Manager
           </p>
         </div>
@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
 
             <input
               type="email"
-              className="mt-2 w-full rounded-2xl border border-gray-300 px-4 py-4 outline-none focus:border-[#d4af37]"
+              className="mt-2 w-full rounded-2xl border border-gray-300 bg-white px-4 py-4 text-lg font-semibold text-[#111827] caret-[#111827] outline-none placeholder:text-gray-400 focus:border-[#d4af37]"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="admin@robertsautorental.com"
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
 
             <input
               type="password"
-              className="mt-2 w-full rounded-2xl border border-gray-300 px-4 py-4 outline-none focus:border-[#d4af37]"
+              className="mt-2 w-full rounded-2xl border border-gray-300 bg-white px-4 py-4 text-lg font-semibold text-[#111827] caret-[#111827] outline-none placeholder:text-gray-400 focus:border-[#d4af37]"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter password"
