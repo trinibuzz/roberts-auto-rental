@@ -24,6 +24,9 @@ type CustomerForm = {
   emergency_contact_phone: string;
   notes: string;
   is_blacklisted: boolean;
+  rental_status: "approved" | "review_required" | "do_not_rent";
+  restriction_reason: string;
+  restriction_notes: string;
 };
 
 const emptyForm: CustomerForm = {
@@ -41,6 +44,9 @@ const emptyForm: CustomerForm = {
   emergency_contact_phone: "",
   notes: "",
   is_blacklisted: false,
+  rental_status: "approved",
+  restriction_reason: "",
+  restriction_notes: "",
 };
 
 export default function EditCustomerPage() {
@@ -91,6 +97,15 @@ export default function EditCustomerPage() {
           emergency_contact_phone: customer.emergency_contact_phone || "",
           notes: customer.notes || "",
           is_blacklisted: Boolean(customer.is_blacklisted),
+          rental_status:
+            customer.rental_status === "review_required" ||
+            customer.rental_status === "do_not_rent"
+              ? customer.rental_status
+              : customer.is_blacklisted
+                ? "do_not_rent"
+                : "approved",
+          restriction_reason: customer.restriction_reason || "",
+          restriction_notes: customer.restriction_notes || "",
         });
       } catch {
         setError("Unable to connect to the server.");
@@ -480,12 +495,73 @@ export default function EditCustomerPage() {
 
                     <FormSection
                       number="4"
-                      title="Notes & Warnings"
-                      subtitle="Internal notes and customer warning status."
+                      title="Rental Eligibility"
+                      subtitle="Control whether this customer may rent, requires review, or must not be rented a vehicle."
                     >
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <StatusButton
+                          label="Approved"
+                          description="Customer may proceed normally."
+                          selected={form.rental_status === "approved"}
+                          tone="green"
+                          onClick={() => updateField("rental_status", "approved")}
+                        />
+
+                        <StatusButton
+                          label="Review Required"
+                          description="Staff must review before approval."
+                          selected={form.rental_status === "review_required"}
+                          tone="amber"
+                          onClick={() =>
+                            updateField("rental_status", "review_required")
+                          }
+                        />
+
+                        <StatusButton
+                          label="Do Not Rent"
+                          description="Do not approve or release a vehicle."
+                          selected={form.rental_status === "do_not_rent"}
+                          tone="red"
+                          onClick={() => updateField("rental_status", "do_not_rent")}
+                        />
+                      </div>
+
+                      {form.rental_status !== "approved" && (
+                        <div className="mt-5 space-y-5 rounded-2xl border border-red-200 bg-red-50 p-5">
+                          <Input
+                            label="Reason"
+                            name="restriction_reason"
+                            value={form.restriction_reason}
+                            onChange={updateField}
+                            required
+                            placeholder="Example: unpaid balance, identity concern, vehicle damage"
+                          />
+
+                          <div>
+                            <label className="block text-sm font-black text-red-800">
+                              Private Staff Notes
+                            </label>
+
+                            <textarea
+                              className="mt-2 min-h-28 w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-[#1d1d1f] outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100"
+                              value={form.restriction_notes}
+                              onChange={(event) =>
+                                updateField("restriction_notes", event.target.value)
+                              }
+                              placeholder="Record objective details staff should know. These notes are never shown to the customer."
+                            />
+                          </div>
+
+                          <p className="text-xs font-bold leading-5 text-red-700">
+                            This information is private and should be based on documented rental, payment, identity, safety, or vehicle-condition concerns.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-6 border-t border-[#eee9df] pt-6">
                       <div>
                         <label className="block text-sm font-black text-[#4b443d]">
-                          Notes
+                          General Customer Notes
                         </label>
 
                         <textarea
@@ -496,26 +572,6 @@ export default function EditCustomerPage() {
                           }
                         />
                       </div>
-
-                      <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-5">
-                        <label className="flex items-start gap-3 text-sm font-black text-red-700">
-                          <input
-                            type="checkbox"
-                            checked={form.is_blacklisted}
-                            onChange={(event) =>
-                              updateField("is_blacklisted", event.target.checked)
-                            }
-                            className="mt-1 h-4 w-4"
-                          />
-
-                          <span>
-                            Mark this customer as blacklisted / warning customer
-                            <span className="mt-1 block text-xs font-semibold leading-5 text-red-600">
-                              Use this only when staff should be warned before
-                              approving or releasing a rental.
-                            </span>
-                          </span>
-                        </label>
                       </div>
                     </FormSection>
                   </div>
@@ -782,6 +838,43 @@ function Input({
         onChange={(event) => onChange(name, event.target.value)}
       />
     </div>
+  );
+}
+
+function StatusButton({
+  label,
+  description,
+  selected,
+  tone,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  selected: boolean;
+  tone: "green" | "amber" | "red";
+  onClick: () => void;
+}) {
+  const selectedStyle = {
+    green: "border-emerald-500 bg-emerald-50 text-emerald-900 ring-4 ring-emerald-100",
+    amber: "border-amber-500 bg-amber-50 text-amber-900 ring-4 ring-amber-100",
+    red: "border-red-500 bg-red-50 text-red-900 ring-4 ring-red-100",
+  }[tone];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border p-5 text-left transition ${
+        selected
+          ? selectedStyle
+          : "border-[#e7e2d9] bg-white text-[#1d1d1f] hover:border-[#d4af37]"
+      }`}
+    >
+      <span className="block text-sm font-black">{label}</span>
+      <span className="mt-2 block text-xs font-semibold leading-5 opacity-75">
+        {description}
+      </span>
+    </button>
   );
 }
 
