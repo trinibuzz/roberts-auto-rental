@@ -5,10 +5,6 @@ import { verifyToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-type SignedInUser = {
-  id?: number | string;
-};
-
 const allowedPaymentMethods = new Set([
   "cash",
   "bank_transfer",
@@ -26,8 +22,11 @@ async function getSignedInUser() {
     cookies().get("robers_token")?.value ||
     cookies().get("token")?.value;
 
-  if (!token) return null;
-  return (await verifyToken(token)) as SignedInUser | null;
+  if (!token) {
+    return null;
+  }
+
+  return await verifyToken(token);
 }
 
 export async function POST(request: Request) {
@@ -38,36 +37,59 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "Not authorized. Please sign in again." },
+        {
+          success: false,
+          message: "Not authorized. Please sign in again.",
+        },
         { status: 401 }
       );
     }
 
     const body = await request.json();
+
     const customerId = Number(body.customer_id || 0);
     const vehicleId = Number(body.vehicle_id || 0);
     const amountPaid = Math.max(0, Number(body.amount_paid || 0));
-    const paymentMethod = String(body.payment_method || "cash").toLowerCase();
-    const paymentReference = String(body.payment_reference || "").trim();
 
-    if (!customerId || !vehicleId || !body.pickup_date || !body.return_date) {
+    const paymentMethod = String(
+      body.payment_method || "cash"
+    ).toLowerCase();
+
+    const paymentReference = String(
+      body.payment_reference || ""
+    ).trim();
+
+    if (
+      !customerId ||
+      !vehicleId ||
+      !body.pickup_date ||
+      !body.return_date
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Customer, vehicle, pickup and return dates are required.",
+          message:
+            "Customer, vehicle, pickup and return dates are required.",
         },
         { status: 400 }
       );
     }
 
-    if (amountPaid > 0 && !allowedPaymentMethods.has(paymentMethod)) {
+    if (
+      amountPaid > 0 &&
+      !allowedPaymentMethods.has(paymentMethod)
+    ) {
       return NextResponse.json(
-        { success: false, message: "Select a valid payment method." },
+        {
+          success: false,
+          message: "Select a valid payment method.",
+        },
         { status: 400 }
       );
     }
 
     const bookingNumber = `RB-${Date.now()}`;
+
     await connection.beginTransaction();
 
     const [result] = await connection.query(
@@ -113,11 +135,11 @@ export async function POST(request: Request) {
       ]
     );
 
-    const bookingId = Number((result as { insertId: number }).insertId);
+    const bookingId = Number(
+      (result as { insertId: number }).insertId
+    );
 
     if (amountPaid > 0) {
-      const recordedBy = Number(user.id || 0) || null;
-
       await connection.query(
         `INSERT INTO payments (
           booking_id,
@@ -125,16 +147,14 @@ export async function POST(request: Request) {
           amount,
           payment_method,
           payment_reference,
-          recorded_by,
           notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
         [
           bookingId,
           customerId,
           amountPaid,
           paymentMethod,
           paymentReference || null,
-          recordedBy,
           "Initial payment recorded during rep booking.",
         ]
       );
@@ -149,11 +169,15 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     await connection.rollback();
+
     console.error("REP CREATE BOOKING ERROR:", error);
 
     if (error?.code === "ER_DUP_ENTRY") {
       return NextResponse.json(
-        { success: false, message: "This booking or payment already exists." },
+        {
+          success: false,
+          message: "This booking or payment already exists.",
+        },
         { status: 400 }
       );
     }
@@ -162,14 +186,18 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "The database is missing a required booking or payment field.",
+          message:
+            "The database is missing a required booking or payment field.",
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { success: false, message: "Failed to create booking." },
+      {
+        success: false,
+        message: "Failed to create booking.",
+      },
       { status: 500 }
     );
   } finally {
