@@ -1,3 +1,4 @@
+
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
@@ -911,7 +912,19 @@ function OverrideBox({ overrideInput, setOverrideInput, approveUnderageOverride 
 }
 
 function CustomerPhoto({ customer }: { customer: Customer }) {
-  if (customer.customer_photo) return <img src={customer.customer_photo} alt={customer.full_name} className="h-16 w-16 rounded-2xl border border-[#eee9df] object-cover" />;
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (customer.customer_photo && !imageFailed) {
+    return (
+      <img
+        src={customer.customer_photo}
+        alt={customer.full_name}
+        className="h-16 w-16 rounded-2xl border border-[#eee9df] object-cover"
+        onError={() => setImageFailed(true)}
+      />
+    );
+  }
+
   return <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#d4af37]/15 text-xl font-black text-[#b98320]">{customer.full_name ? customer.full_name.charAt(0).toUpperCase() : "?"}</div>;
 }
 

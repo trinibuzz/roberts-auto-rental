@@ -1,38 +1,70 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { createHash } from "crypto";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { verifyToken } from "@/lib/auth";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
-const allowedTypes = new Set([
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
-  "image/jpg",
   "image/png",
   "image/webp",
+  "image/heic",
+  "image/heif",
 ]);
 
-const allowedExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+function getCloudinarySettings() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error("Cloudinary environment variables are missing.");
+  }
+
+  return { cloudName, apiKey, apiSecret };
+}
+
+async function requireSignedInUser() {
+  const token =
+    cookies().get("admin_token")?.value ||
+    cookies().get("roberts_token")?.value ||
+    cookies().get("robers_token")?.value ||
+    cookies().get("roberts_rep_token")?.value ||
+    cookies().get("token")?.value;
+
+  if (!token) return null;
+  return verifyToken(token);
+}
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
+    const user = await requireSignedInUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Please sign in before uploading a photo." },
+        { status: 401 }
+      );
+    }
+
+    const incomingForm = await request.formData();
+    const file = incomingForm.get("file");
 
     if (!(file instanceof File)) {
       return NextResponse.json(
-        { success: false, message: "No image file was uploaded." },
+        { success: false, message: "Choose a vehicle image to upload." },
         { status: 400 }
       );
     }
 
-    if (!allowedTypes.has(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       return NextResponse.json(
         {
           success: false,
-          message: "Only JPG, PNG, and WEBP vehicle images are allowed.",
+          message: "Use a JPG, PNG, WebP, HEIC, or HEIF image.",
         },
         { status: 400 }
       );
@@ -40,46 +72,58 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { success: false, message: "Vehicle image must be 10MB or smaller." },
+        { success: false, message: "The image must be 10 MB or smaller." },
         { status: 400 }
       );
     }
 
-    const originalExtension = path.extname(file.name).toLowerCase();
-    const extension = allowedExtensions.has(originalExtension)
-      ? originalExtension
-      : ".jpg";
+    const { cloudName, apiKey, apiSecret } = getCloudinarySettings();
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = "roberts-auto-rental/vehicles";
+    const signatureSource = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+    const signature = createHash("sha1").update(signatureSource).digest("hex");
 
-    const safeName = `vehicle-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 10)}${extension}`;
+    const cloudinaryForm = new FormData();
+    cloudinaryForm.append("file", file, file.name || `vehicle-${Date.now()}.jpg`);
+    cloudinaryForm.append("api_key", apiKey);
+    cloudinaryForm.append("timestamp", String(timestamp));
+    cloudinaryForm.append("folder", folder);
+    cloudinaryForm.append("signature", signature);
 
-    const uploadDirectory = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "vehicles"
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: cloudinaryForm,
+        cache: "no-store",
+      }
     );
 
-    await mkdir(uploadDirectory, { recursive: true });
+    const uploadData = await uploadResponse.json();
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    if (!uploadResponse.ok || !uploadData.secure_url) {
+      console.error("CLOUDINARY VEHICLE UPLOAD ERROR:", uploadData);
 
-    await writeFile(path.join(uploadDirectory, safeName), buffer);
-
-    const imageUrl = `/uploads/vehicles/${safeName}`;
+      return NextResponse.json(
+        { success: false, message: "The vehicle photo could not be uploaded." },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      url: imageUrl,
-      message: "Vehicle image uploaded successfully.",
+      message: "Vehicle photo uploaded successfully.",
+      url: uploadData.secure_url,
+      publicId: uploadData.public_id,
     });
   } catch (error) {
-    console.error("Vehicle image upload error:", error);
+    console.error("VEHICLE PHOTO UPLOAD ERROR:", error);
 
     return NextResponse.json(
-      { success: false, message: "Unable to upload vehicle image." },
+      {
+        success: false,
+        message: "Vehicle photo storage is not configured correctly.",
+      },
       { status: 500 }
     );
   }
