@@ -67,6 +67,14 @@ type InspectionRecord = {
   created_at?: string | null;
 };
 
+type CustomerSignature = {
+  id: number;
+  signature_data: string;
+  signed_name: string | null;
+  signed_at: string;
+  rep_name: string | null;
+};
+
 export default async function BookingDetailPage({
   params,
 }: {
@@ -191,6 +199,18 @@ export default async function BookingDetailPage({
     note: string | null;
     created_at: string;
   }[];
+
+  const [signatureRows] = await db.query(
+    `SELECT id, signature_data, signed_name, signed_at, rep_name
+     FROM customer_signatures
+     WHERE booking_id = ?
+     ORDER BY signed_at DESC
+     LIMIT 1`,
+    [bookingId]
+  );
+
+  const customerSignature =
+    (signatureRows as CustomerSignature[])[0] || null;
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -598,13 +618,30 @@ export default async function BookingDetailPage({
 
               <div className="mt-12 grid gap-10 md:grid-cols-2">
                 <div>
+                  {customerSignature ? (
+                    <div className="mb-3 rounded-xl border border-gray-200 bg-white p-3">
+                      <img
+                        src={customerSignature.signature_data}
+                        alt="Customer signature"
+                        className="h-24 w-full object-contain object-left"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-3 h-24 rounded-xl border border-dashed border-gray-300" />
+                  )}
+
                   <div className="border-t border-gray-400 pt-3">
                     <p className="text-sm font-semibold text-gray-900">
                       Customer Signature
                     </p>
                     <p className="text-xs text-gray-500">
-                      {booking.customer_name}
+                      {customerSignature?.signed_name || booking.customer_name}
                     </p>
+                    {customerSignature?.signed_at && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Signed {formatDate(customerSignature.signed_at)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
