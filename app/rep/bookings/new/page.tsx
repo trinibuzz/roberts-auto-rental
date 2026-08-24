@@ -202,9 +202,13 @@ export default function RepNewBookingPage() {
   const filteredCustomers = useMemo(() => {
     const search = customerSearch.trim().toLowerCase();
 
-    if (!search) return customers.slice(0, 8);
+    const newestFirst = [...customers].sort(
+      (first, second) => Number(second.id) - Number(first.id)
+    );
 
-    return customers
+    if (!search) return newestFirst.slice(0, 5);
+
+    return newestFirst
       .filter((customer) => {
         return (
           customer.full_name?.toLowerCase().includes(search) ||
@@ -212,7 +216,7 @@ export default function RepNewBookingPage() {
           customer.whatsapp?.toLowerCase().includes(search)
         );
       })
-      .slice(0, 16);
+      .slice(0, 5);
   }, [customers, customerSearch]);
 
   const filteredVehicles = useMemo(() => {
